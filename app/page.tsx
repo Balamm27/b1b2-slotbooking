@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
+import bundledData from "../public/data/attempts.json";
 
 type StageState = "pass" | "fail" | "pending";
 type Attempt = {
@@ -16,6 +17,7 @@ type Attempt = {
   notes: string;
   weight?: number;
   inferred?: boolean;
+  sourceUrl?: string;
 };
 
 type WindowRow = {
@@ -27,68 +29,9 @@ type WindowRow = {
   basis: string;
 };
 
-const seedAttempts: Attempt[] = [
-  {
-    id: "seed-0126pm-20260820",
-    date: "2026-08-20",
-    window: "1:26 PM",
-    selectWindow: "1:25:50–1:26:10 PM",
-    calendar: "pass",
-    time: "pass",
-    submit: "fail",
-    consular: "pending",
-    notes: "Logged in during the 1:23 PM slab. Time slots appeared, but the selected slot was gone by the time Submit was pressed.",
-  },
-  {
-    id: "seed-1026",
-    date: "Date TBD",
-    window: "10:26 AM",
-    selectWindow: "10:25:50–10:26:10 AM",
-    calendar: "fail",
-    time: "pending",
-    submit: "pending",
-    consular: "pending",
-    notes: "No calendar appeared. Reported as a complete miss.",
-    inferred: true,
-  },
-  {
-    id: "seed-1056",
-    date: "Date TBD",
-    window: "10:56 AM",
-    selectWindow: "10:55:50–10:56:10 AM",
-    calendar: "pass",
-    time: "pass",
-    submit: "fail",
-    consular: "pending",
-    notes: "Time slot appeared, but Submit returned that the slot was already gone.",
-    inferred: true,
-  },
-  {
-    id: "seed-0856pm",
-    date: "Aug 17–19",
-    window: "8:56 PM",
-    selectWindow: "8:55:50–8:56:10 PM",
-    calendar: "pass",
-    time: "fail",
-    submit: "pending",
-    consular: "pending",
-    notes: "Repeated over several evenings: calendar dates appeared, but no time rows loaded.",
-    weight: 3,
-    inferred: true,
-  },
-  {
-    id: "seed-0926pm",
-    date: "2026-08-19",
-    window: "9:26 PM",
-    selectWindow: "9:25:50–9:26:10 PM",
-    calendar: "pass",
-    time: "fail",
-    submit: "pending",
-    consular: "pending",
-    notes: "Calendar appeared, but the time inventory was empty.",
-    inferred: true,
-  },
-];
+const bundledAttempts = bundledData.attempts as Attempt[];
+const gitDataUrl = "https://raw.githubusercontent.com/Balamm27/b1b2-slotbooking/refs/heads/feature/chennai-slot-dashboard/public/data/attempts.json";
+const newIssueUrl = "https://github.com/Balamm27/b1b2-slotbooking/issues/new";
 
 const windows: WindowRow[] = [
   { window: "8:56 AM", login: "8:53:30–8:54:30", schedule: "8:55:15–8:55:35", select: "8:55:50–8:56:10", status: "active", basis: "Previously ranked candidate; source verification pending" },
@@ -131,20 +74,31 @@ function weightedCount(attempts: Attempt[], predicate: (attempt: Attempt) => boo
 }
 
 export default function Home() {
-  const [localAttempts, setLocalAttempts] = useState<Attempt[]>([]);
+  const [attempts, setAttempts] = useState<Attempt[]>(bundledAttempts);
+  const [syncState, setSyncState] = useState<"loading" | "synced" | "fallback">("loading");
   const [statusFilter, setStatusFilter] = useState<"all" | WindowRow["status"]>("all");
   const [query, setQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState<"windows" | "attempts">("windows");
 
   useEffect(() => {
-    const saved = window.localStorage.getItem("b1b2-local-attempts");
-    if (saved) {
-      try { setLocalAttempts(JSON.parse(saved)); } catch { /* ignore malformed local data */ }
-    }
+    const controller = new AbortController();
+    fetch(`${gitDataUrl}?v=${Date.now()}`, { cache: "no-store", signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error("Git data unavailable");
+        return response.json();
+      })
+      .then((data: { attempts?: Attempt[] }) => {
+        if (!Array.isArray(data.attempts)) throw new Error("Invalid Git data");
+        setAttempts(data.attempts);
+        setSyncState("synced");
+      })
+      .catch((error: Error) => {
+        if (error.name !== "AbortError") setSyncState("fallback");
+      });
+    return () => controller.abort();
   }, []);
 
-  const attempts = useMemo(() => [...localAttempts, ...seedAttempts], [localAttempts]);
   const total = weightedCount(attempts, () => true);
   const calendarHits = weightedCount(attempts, (a) => a.calendar === "pass");
   const timeHits = weightedCount(attempts, (a) => a.time === "pass");
@@ -161,19 +115,26 @@ export default function Home() {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const outcome = String(form.get("outcome"));
-    const next: Attempt = {
-      id: `local-${Date.now()}`,
+    const next = {
       date: String(form.get("date")),
       window: String(form.get("window")),
       selectWindow: String(form.get("window")),
       ...outcomeMap[outcome],
       notes: String(form.get("notes") || outcomeLabels[outcome]),
     };
-    const updated = [next, ...localAttempts];
-    setLocalAttempts(updated);
-    window.localStorage.setItem("b1b2-local-attempts", JSON.stringify(updated));
+    const body = [
+      "<!-- chennai-slot-attempt:v1",
+      JSON.stringify(next, null, 2),
+      "-->",
+      "## Chennai VAC attempt",
+      "This structured record was prepared by the Chennai Slot Lab dashboard.",
+      "Submitting this issue stores the attempt in the repository dataset.",
+    ].join("\n");
+    const issue = new URL(newIssueUrl);
+    issue.searchParams.set("title", `[Attempt] ${next.date} · ${next.window}`);
+    issue.searchParams.set("body", body);
+    window.open(issue.toString(), "_blank", "noopener,noreferrer");
     setShowForm(false);
-    setActiveTab("attempts");
   }
 
   function exportData() {
@@ -195,7 +156,7 @@ export default function Home() {
           <div><strong>Chennai Slot Lab</strong><span>Evidence tracker</span></div>
         </div>
         <div className="header-actions">
-          <span className="live-pill"><i /> Local dataset</span>
+          <span className={`live-pill ${syncState}`}><i /> {syncState === "synced" ? "Git-backed dataset" : syncState === "loading" ? "Syncing with Git" : "Bundled snapshot"}</span>
           <button className="ghost-button" onClick={exportData}>Export JSON</button>
           <button className="primary-button" onClick={() => setShowForm(true)}>+ Log attempt</button>
         </div>
@@ -279,7 +240,7 @@ export default function Home() {
             {attempts.map((attempt) => <article className="attempt-row" key={attempt.id}>
               <div><strong>{attempt.window}</strong><span>{attempt.date}{attempt.weight ? ` · ${attempt.weight}× runs` : ""}{attempt.inferred ? " · verify date" : ""}</span></div>
               <StatusMark state={attempt.calendar} /><StatusMark state={attempt.time} /><StatusMark state={attempt.submit} /><StatusMark state={attempt.consular} />
-              <p>{attempt.notes}</p>
+              <p>{attempt.notes}{attempt.sourceUrl && <a className="source-link" href={attempt.sourceUrl} target="_blank" rel="noreferrer">GitHub record ↗</a>}</p>
             </article>)}
           </div>
         )}
@@ -291,7 +252,7 @@ export default function Home() {
         <article className="insight-card protocol"><p className="eyebrow">Recording protocol</p><h3>Five stages. One vocabulary.</h3><ol><li>Chennai selected</li><li>Calendar appeared</li><li>Time row appeared</li><li>Submit accepted</li><li>Consular page reached</li></ol></article>
       </section>
 
-      <footer><span>Chennai Slot Lab · Local-first experiment</span><span>Unofficial community research · Not affiliated with the U.S. Department of State</span></footer>
+      <footer><span>Chennai Slot Lab · Git-backed experiment</span><span>Unofficial community research · Not affiliated with the U.S. Department of State</span></footer>
 
       {showForm && <div className="modal-backdrop" role="presentation" onMouseDown={() => setShowForm(false)}>
         <form className="attempt-form" onSubmit={addAttempt} onMouseDown={(e) => e.stopPropagation()}>
@@ -300,7 +261,8 @@ export default function Home() {
           <label>Attempted window<select name="window" required>{windows.map((item) => <option key={item.window}>{item.window}</option>)}</select></label>
           <fieldset><legend>Deepest outcome reached</legend>{Object.entries(outcomeLabels).map(([value, label], index) => <label className="radio-row" key={value}><input type="radio" name="outcome" value={value} defaultChecked={index === 0} /><span><b>{label}</b><small>Stages before this are recorded as passed.</small></span></label>)}</fieldset>
           <label>Notes<textarea name="notes" placeholder="Dates shown, time selected, error message, loading behavior…" rows={3} /></label>
-          <div className="form-actions"><button type="button" className="ghost-button" onClick={() => setShowForm(false)}>Cancel</button><button className="primary-button" type="submit">Save observation</button></div>
+          <p className="git-note">Your entry will open as a prefilled GitHub issue. Review it and click <strong>Submit new issue</strong>; the repository workflow will then validate and store it permanently.</p>
+          <div className="form-actions"><button type="button" className="ghost-button" onClick={() => setShowForm(false)}>Cancel</button><button className="primary-button" type="submit">Continue in GitHub ↗</button></div>
         </form>
       </div>}
     </main>

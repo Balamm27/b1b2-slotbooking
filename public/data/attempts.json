@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-08-20T20:30:00.000Z",
+  "attempts": [
+    {
+      "id": "seed-0126pm-20260820",
+      "date": "2026-08-20",
+      "window": "1:26 PM",
+      "selectWindow": "1:25:50–1:26:10 PM",
+      "calendar": "pass",
+      "time": "pass",
+      "submit": "fail",
+      "consular": "pending",
+      "notes": "Logged in during the 1:23 PM slab. Time slots appeared, but the selected slot was gone by the time Submit was pressed."
+    },
+    {
+      "id": "seed-1026",
+      "date": "Date TBD",
+      "window": "10:26 AM",
+      "selectWindow": "10:25:50–10:26:10 AM",
+      "calendar": "fail",
+      "time": "pending",
+      "submit": "pending",
+      "consular": "pending",
+      "notes": "No calendar appeared. Reported as a complete miss.",
+      "inferred": true
+    },
+    {
+      "id": "seed-1056",
+      "date": "Date TBD",
+      "window": "10:56 AM",
+      "selectWindow": "10:55:50–10:56:10 AM",
+      "calendar": "pass",
+      "time": "pass",
+      "submit": "fail",
+      "consular": "pending",
+      "notes": "Time slot appeared, but Submit returned that the slot was already gone.",
+      "inferred": true
+    },
+    {
+      "id": "seed-0856pm",
+      "date": "Aug 17–19",
+      "window": "8:56 PM",
+      "selectWindow": "8:55:50–8:56:10 PM",
+      "calendar": "pass",
+      "time": "fail",
+      "submit": "pending",
+      "consular": "pending",
+      "notes": "Repeated over several evenings: calendar dates appeared, but no time rows loaded.",
+      "weight": 3,
+      "inferred": true
+    },
+    {
+      "id": "seed-0926pm",
+      "date": "2026-08-19",
+      "window": "9:26 PM",
+      "selectWindow": "9:25:50–9:26:10 PM",
+      "calendar": "pass",
+      "time": "fail",
+      "submit": "pending",
+      "consular": "pending",
+      "notes": "Calendar appeared, but the time inventory was empty.",
+      "inferred": true
+    }
+  ]
+}

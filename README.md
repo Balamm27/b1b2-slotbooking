@@ -28,11 +28,17 @@ Open [http://localhost:3000](http://localhost:3000).
 npm test
 ```
 
-## Data behavior
+## Git-backed data flow
 
-- The evidence currently confirmed in this project is seeded in `app/page.tsx`.
-- Attempts added with **Log attempt** are stored in that browser's local storage.
-- **Export JSON** downloads the combined seed and local-attempt dataset.
+- The versioned source of truth is `public/data/attempts.json`.
+- The dashboard fetches the latest copy from GitHub at runtime and falls back to
+  its bundled snapshot if GitHub is temporarily unavailable.
+- **Log attempt** opens a prefilled GitHub issue for the repository owner to
+  confirm. The `record-attempt.yml` workflow validates the structured payload,
+  commits it to the JSON dataset, comments on the intake issue, and closes it.
+- The GitHub token remains inside GitHub Actions and is never exposed to the
+  browser.
+- **Export JSON** downloads the currently loaded dataset.
 - No claim of a guaranteed release time is made; rankings are observational.
 
 ## Deployment
