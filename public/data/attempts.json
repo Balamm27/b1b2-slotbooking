@@ -1,7 +1,19 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-08-20T20:30:00.000Z",
+  "updatedAt": "2026-08-20T20:59:15.323Z",
   "attempts": [
+    {
+      "id": "github-1",
+      "date": "2026-08-20",
+      "window": "1:56 PM",
+      "selectWindow": "1:56 PM",
+      "calendar": "pass",
+      "time": "fail",
+      "submit": "pending",
+      "consular": "pending",
+      "notes": "Calendar appeared, but it seemed to be the same calendar carried over from the 1:26 PM attempt. No time slots were available.",
+      "sourceUrl": "https://github.com/Balamm27/b1b2-slotbooking/issues/1"
+    },
     {
       "id": "seed-0126pm-20260820",
       "date": "2026-08-20",
