@@ -43,6 +43,10 @@ npm test
 
 ## Deployment
 
-The project is prepared for Sites hosting through `.openai/hosting.json`. Keep it
-local while the experiment model and seed data are being reviewed; publish only
-after the owner approves the dashboard.
+The public dashboard is deployed by `.github/workflows/deploy-pages.yml` to:
+
+https://balamm27.github.io/b1b2-slotbooking/
+
+The Pages build uses Next.js static export with the repository base path. The
+Git-backed attempt workflow does not need to rebuild the site after every new
+record because the dashboard fetches the versioned dataset at runtime.
