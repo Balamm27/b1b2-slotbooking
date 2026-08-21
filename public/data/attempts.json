@@ -1,7 +1,19 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-08-21T16:01:56.748Z",
+  "updatedAt": "2026-08-21T20:30:00.305Z",
   "attempts": [
+    {
+      "id": "github-3",
+      "date": "2026-08-21",
+      "window": "1:26 PM",
+      "selectWindow": "1:25:50–1:26:10 PM",
+      "calendar": "pass",
+      "time": "pass",
+      "submit": "fail",
+      "consular": "pending",
+      "notes": "Calendar loaded and showed 09/25/2026 at 09:00 with availability 1. After selecting it and pressing Submit, the portal reported: ‘The selected appointment time is no longer available, please select another appointment time.’",
+      "sourceUrl": "https://github.com/Balamm27/b1b2-slotbooking/issues/3"
+    },
     {
       "id": "github-2",
       "date": "2026-08-21",
