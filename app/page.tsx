@@ -12,12 +12,21 @@ type Attempt = {
   selectWindow: string;
   calendar: StageState;
   time: StageState;
-  submit: StageState;
-  consular: StageState;
+  submitClicked: StageState;
+  slotAccepted: StageState;
+  bookingCompleted: StageState;
   notes: string;
   weight?: number;
   inferred?: boolean;
   sourceUrl?: string;
+};
+
+type StoredAttempt = Omit<Attempt, "submitClicked" | "slotAccepted" | "bookingCompleted"> & {
+  submitClicked?: StageState;
+  slotAccepted?: StageState;
+  bookingCompleted?: StageState;
+  submit?: StageState;
+  consular?: StageState;
 };
 
 type WindowRow = {
@@ -29,7 +38,17 @@ type WindowRow = {
   basis: string;
 };
 
-const bundledAttempts = bundledData.attempts as Attempt[];
+function normalizeAttempt(attempt: StoredAttempt): Attempt {
+  if (attempt.submitClicked && attempt.slotAccepted && attempt.bookingCompleted) return attempt as Attempt;
+  return {
+    ...attempt,
+    submitClicked: attempt.submit === "pass" || attempt.submit === "fail" ? "pass" : "pending",
+    slotAccepted: attempt.submit ?? "pending",
+    bookingCompleted: "pending",
+  };
+}
+
+const bundledAttempts = (bundledData.attempts as StoredAttempt[]).map(normalizeAttempt);
 const gitDataUrl = "https://raw.githubusercontent.com/Balamm27/b1b2-slotbooking/refs/heads/feature/chennai-slot-dashboard/public/data/attempts.json";
 const newIssueUrl = "https://github.com/Balamm27/b1b2-slotbooking/issues/new";
 
@@ -48,20 +67,22 @@ const windows: WindowRow[] = [
   { window: "11:26 AM", login: "11:23:30–11:24:30", schedule: "11:25:15–11:25:35", select: "11:25:50–11:26:10", status: "research", basis: "Delayed alert only; removed from ranking" },
 ];
 
-const outcomeMap: Record<string, Pick<Attempt, "calendar" | "time" | "submit" | "consular">> = {
-  noCalendar: { calendar: "fail", time: "pending", submit: "pending", consular: "pending" },
-  calendarOnly: { calendar: "pass", time: "fail", submit: "pending", consular: "pending" },
-  timeFound: { calendar: "pass", time: "pass", submit: "fail", consular: "pending" },
-  submitPassed: { calendar: "pass", time: "pass", submit: "pass", consular: "fail" },
-  consularReached: { calendar: "pass", time: "pass", submit: "pass", consular: "pass" },
+const outcomeMap: Record<string, Pick<Attempt, "calendar" | "time" | "submitClicked" | "slotAccepted" | "bookingCompleted">> = {
+  noCalendar: { calendar: "fail", time: "pending", submitClicked: "pending", slotAccepted: "pending", bookingCompleted: "pending" },
+  calendarOnly: { calendar: "pass", time: "fail", submitClicked: "pending", slotAccepted: "pending", bookingCompleted: "pending" },
+  timeOnly: { calendar: "pass", time: "pass", submitClicked: "fail", slotAccepted: "pending", bookingCompleted: "pending" },
+  submitRejected: { calendar: "pass", time: "pass", submitClicked: "pass", slotAccepted: "fail", bookingCompleted: "pending" },
+  slotAccepted: { calendar: "pass", time: "pass", submitClicked: "pass", slotAccepted: "pass", bookingCompleted: "fail" },
+  bookingCompleted: { calendar: "pass", time: "pass", submitClicked: "pass", slotAccepted: "pass", bookingCompleted: "pass" },
 };
 
 const outcomeLabels: Record<string, string> = {
   noCalendar: "No calendar",
   calendarOnly: "Calendar, no time",
-  timeFound: "Time found, Submit failed",
-  submitPassed: "Submit passed",
-  consularReached: "Consular step reached",
+  timeOnly: "Time appeared; Submit not clicked",
+  submitRejected: "Submit clicked; slot rejected",
+  slotAccepted: "Slot accepted; booking not completed",
+  bookingCompleted: "Booking completed",
 };
 
 function StatusMark({ state }: { state: StageState }) {
@@ -80,6 +101,12 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState<"windows" | "attempts">("windows");
+  const [attemptDate, setAttemptDate] = useState(() => new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Los_Angeles",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date()));
 
   useEffect(() => {
     const controller = new AbortController();
@@ -88,9 +115,9 @@ export default function Home() {
         if (!response.ok) throw new Error("Git data unavailable");
         return response.json();
       })
-      .then((data: { attempts?: Attempt[] }) => {
+      .then((data: { attempts?: StoredAttempt[] }) => {
         if (!Array.isArray(data.attempts)) throw new Error("Invalid Git data");
-        setAttempts(data.attempts);
+        setAttempts(data.attempts.map(normalizeAttempt));
         setSyncState("synced");
       })
       .catch((error: Error) => {
@@ -102,8 +129,10 @@ export default function Home() {
   const total = weightedCount(attempts, () => true);
   const calendarHits = weightedCount(attempts, (a) => a.calendar === "pass");
   const timeHits = weightedCount(attempts, (a) => a.time === "pass");
-  const submitHits = weightedCount(attempts, (a) => a.submit === "pass");
-  const consularHits = weightedCount(attempts, (a) => a.consular === "pass");
+  const submitClickedHits = weightedCount(attempts, (a) => a.submitClicked === "pass");
+  const slotAcceptedHits = weightedCount(attempts, (a) => a.slotAccepted === "pass");
+  const bookingHits = weightedCount(attempts, (a) => a.bookingCompleted === "pass");
+  const deepestStage = bookingHits ? ["Booking completed", "100%"] : slotAcceptedHits ? ["Slot accepted", "80%"] : submitClickedHits ? ["Submit clicked", "60%"] : timeHits ? ["Time slot", "40%"] : calendarHits ? ["Calendar", "20%"] : ["Chennai queried", "5%"];
 
   const filteredWindows = windows.filter((item) => {
     const matchesStatus = statusFilter === "all" || item.status === statusFilter;
@@ -115,15 +144,17 @@ export default function Home() {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const outcome = String(form.get("outcome"));
+    const attemptedWindow = String(form.get("window"));
+    const selectedWindow = windows.find((item) => item.window === attemptedWindow);
     const next = {
       date: String(form.get("date")),
-      window: String(form.get("window")),
-      selectWindow: String(form.get("window")),
+      window: attemptedWindow,
+      selectWindow: selectedWindow?.select ?? attemptedWindow,
       ...outcomeMap[outcome],
       notes: String(form.get("notes") || outcomeLabels[outcome]),
     };
     const body = [
-      "<!-- chennai-slot-attempt:v1",
+      "<!-- chennai-slot-attempt:v2",
       JSON.stringify(next, null, 2),
       "-->",
       "## Chennai VAC attempt",
@@ -166,13 +197,13 @@ export default function Home() {
         <div>
           <p className="eyebrow">B1/B2 · Chennai VAC · Pacific time</p>
           <h1>Turn every booking attempt<br />into usable evidence.</h1>
-          <p className="hero-copy">Track the full race—from the VAC dropdown to the consular calendar. No magic times, just observed outcomes.</p>
+          <p className="hero-copy">Track the full race—from the VAC dropdown to final booking confirmation. No magic times, just observed outcomes.</p>
         </div>
         <div className="hero-score">
           <span>Deepest stage reached</span>
-          <strong>Time slot</strong>
-          <div className="score-track"><i style={{ width: "54%" }} /></div>
-          <small>Submit lost the race once</small>
+          <strong>{deepestStage[0]}</strong>
+          <div className="score-track"><i style={{ width: deepestStage[1] }} /></div>
+          <small>{slotAcceptedHits ? "At least one slot survived Submit" : submitClickedHits ? "Submit reached; inventory race remains" : "Building evidence stage by stage"}</small>
         </div>
       </section>
 
@@ -180,21 +211,24 @@ export default function Home() {
         <article><span>Total observed runs</span><strong>{total}</strong><small>Weighted repeated reports</small></article>
         <article><span>Calendar appeared</span><strong>{conversion(calendarHits)}%</strong><small>{calendarHits} of {total} attempts</small></article>
         <article><span>Time row appeared</span><strong>{conversion(timeHits)}%</strong><small>{timeHits} of {total} attempts</small></article>
-        <article className="danger-card"><span>Submit survived</span><strong>{conversion(submitHits)}%</strong><small>{submitHits} confirmed reservations</small></article>
+        <article><span>Submit clicked</span><strong>{conversion(submitClickedHits)}%</strong><small>{submitClickedHits} of {total} attempts</small></article>
+        <article className="danger-card"><span>Slot accepted</span><strong>{conversion(slotAcceptedHits)}%</strong><small>{slotAcceptedHits} survived the inventory race</small></article>
+        <article className="success-card"><span>Booking completed</span><strong>{conversion(bookingHits)}%</strong><small>{bookingHits} final confirmations</small></article>
       </section>
 
       <section className="funnel-panel">
         <div className="section-heading">
           <div><p className="eyebrow">Conversion funnel</p><h2>Where luck runs out</h2></div>
-          <span className="updated">Updated Aug 20, 2026</span>
+          <span className="updated">Updated Aug 21, 2026</span>
         </div>
         <div className="funnel">
           {[
             ["Chennai queried", total, "100%"],
             ["Calendar dates", calendarHits, `${conversion(calendarHits)}%`],
             ["Time inventory", timeHits, `${conversion(timeHits)}%`],
-            ["Submit accepted", submitHits, `${conversion(submitHits)}%`],
-            ["Consular page", consularHits, `${conversion(consularHits)}%`],
+            ["Submit clicked", submitClickedHits, `${conversion(submitClickedHits)}%`],
+            ["Slot accepted", slotAcceptedHits, `${conversion(slotAcceptedHits)}%`],
+            ["Booking completed", bookingHits, `${conversion(bookingHits)}%`],
           ].map(([label, count, percent], index) => (
             <div className="funnel-step" key={String(label)}>
               <div className="funnel-index">0{index + 1}</div>
@@ -222,24 +256,27 @@ export default function Home() {
         {activeTab === "windows" ? (
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Window</th><th>Login range</th><th>Schedule click</th><th>Select Chennai</th><th>Runs</th><th>Calendar</th><th>Time</th><th>Status</th><th>Evidence</th></tr></thead>
+              <thead><tr><th>Window</th><th>Login range</th><th>Schedule click</th><th>Select Chennai</th><th>Runs</th><th>Calendar</th><th>Time</th><th>Submit clicked</th><th>Slot accepted</th><th>Booking completed</th><th>Status</th><th>Evidence</th></tr></thead>
               <tbody>{filteredWindows.map((item) => {
                 const related = attempts.filter((a) => a.window.toLowerCase() === item.window.toLowerCase());
                 const runs = weightedCount(related, () => true);
                 const cal = weightedCount(related, (a) => a.calendar === "pass");
                 const times = weightedCount(related, (a) => a.time === "pass");
+                const clicked = weightedCount(related, (a) => a.submitClicked === "pass");
+                const accepted = weightedCount(related, (a) => a.slotAccepted === "pass");
+                const booked = weightedCount(related, (a) => a.bookingCompleted === "pass");
                 return <tr key={item.window} className={item.status === "removed" ? "muted-row" : ""}>
-                  <td><strong>{item.window}</strong><small>Pacific</small></td><td>{item.login}</td><td>{item.schedule}</td><td className="select-time">{item.select}</td><td>{runs || "—"}</td><td>{runs ? `${Math.round(cal / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(times / runs * 100)}%` : "—"}</td><td><span className={`status-chip ${item.status}`}>{item.status}</span></td><td className="evidence-cell">{item.basis}</td>
+                  <td><strong>{item.window}</strong><small>Pacific</small></td><td>{item.login}</td><td>{item.schedule}</td><td className="select-time">{item.select}</td><td>{runs || "—"}</td><td>{runs ? `${Math.round(cal / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(times / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(clicked / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(accepted / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(booked / runs * 100)}%` : "—"}</td><td><span className={`status-chip ${item.status}`}>{item.status}</span></td><td className="evidence-cell">{item.basis}</td>
                 </tr>;
               })}</tbody>
             </table>
           </div>
         ) : (
           <div className="attempt-list">
-            <div className="attempt-head"><span>Date / window</span><span>Calendar</span><span>Time</span><span>Submit</span><span>Consular</span><span>Observation</span></div>
+            <div className="attempt-head"><span>Date / window</span><span>Calendar</span><span>Time</span><span>Submit clicked</span><span>Slot accepted</span><span>Booking completed</span><span>Observation</span></div>
             {attempts.map((attempt) => <article className="attempt-row" key={attempt.id}>
               <div><strong>{attempt.window}</strong><span>{attempt.date}{attempt.weight ? ` · ${attempt.weight}× runs` : ""}{attempt.inferred ? " · verify date" : ""}</span></div>
-              <StatusMark state={attempt.calendar} /><StatusMark state={attempt.time} /><StatusMark state={attempt.submit} /><StatusMark state={attempt.consular} />
+              <StatusMark state={attempt.calendar} /><StatusMark state={attempt.time} /><StatusMark state={attempt.submitClicked} /><StatusMark state={attempt.slotAccepted} /><StatusMark state={attempt.bookingCompleted} />
               <p>{attempt.notes}{attempt.sourceUrl && <a className="source-link" href={attempt.sourceUrl} target="_blank" rel="noreferrer">GitHub record ↗</a>}</p>
             </article>)}
           </div>
@@ -248,8 +285,8 @@ export default function Home() {
 
       <section className="insights-grid">
         <article className="insight-card"><p className="eyebrow">Working hypothesis</p><h3>Evening calendars are stale.</h3><p>8:56 PM and 9:26 PM repeatedly reached calendar dates without producing time inventory. They remain visible in the archive, but are removed from the active strategy.</p></article>
-        <article className="insight-card"><p className="eyebrow">Current bottleneck</p><h3>Submit is the new frontier.</h3><p>The 10:56 AM slab reached a real time row. The next experiment should measure the interval from selecting the time to pressing Submit—not add more speculative windows.</p></article>
-        <article className="insight-card protocol"><p className="eyebrow">Recording protocol</p><h3>Five stages. One vocabulary.</h3><ol><li>Chennai selected</li><li>Calendar appeared</li><li>Time row appeared</li><li>Submit accepted</li><li>Consular page reached</li></ol></article>
+        <article className="insight-card"><p className="eyebrow">Current bottleneck</p><h3>Slot acceptance is the frontier.</h3><p>Multiple attempts reached a real time row and the Submit click. The unresolved race is whether the portal accepts that selected inventory before another applicant claims it.</p></article>
+        <article className="insight-card protocol"><p className="eyebrow">Recording protocol</p><h3>Five stages. One vocabulary.</h3><ol><li>Calendar loaded</li><li>Time slot appeared</li><li>Submit clicked</li><li>Slot accepted</li><li>Booking completed</li></ol></article>
       </section>
 
       <footer><span>Chennai Slot Lab · Git-backed experiment</span><span>Unofficial community research · Not affiliated with the U.S. Department of State</span></footer>
@@ -257,7 +294,7 @@ export default function Home() {
       {showForm && <div className="modal-backdrop" role="presentation" onMouseDown={() => setShowForm(false)}>
         <form className="attempt-form" onSubmit={addAttempt} onMouseDown={(e) => e.stopPropagation()}>
           <div className="form-head"><div><p className="eyebrow">New observation</p><h2>Log an attempt</h2></div><button type="button" aria-label="Close form" onClick={() => setShowForm(false)}>×</button></div>
-          <label>Date<input name="date" type="date" required defaultValue="2026-08-20" /></label>
+          <label>Date<input name="date" type="date" required value={attemptDate} onChange={(event) => setAttemptDate(event.target.value)} /></label>
           <label>Attempted window<select name="window" required>{windows.map((item) => <option key={item.window}>{item.window}</option>)}</select></label>
           <fieldset><legend>Deepest outcome reached</legend>{Object.entries(outcomeLabels).map(([value, label], index) => <label className="radio-row" key={value}><input type="radio" name="outcome" value={value} defaultChecked={index === 0} /><span><b>{label}</b><small>Stages before this are recorded as passed.</small></span></label>)}</fieldset>
           <label>Notes<textarea name="notes" placeholder="Dates shown, time selected, error message, loading behavior…" rows={3} /></label>

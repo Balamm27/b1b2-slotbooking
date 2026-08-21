@@ -3,10 +3,11 @@
 A local-first evidence dashboard for tracking first-time B1/B2 appointment
 attempts at Chennai VAC. It separates each attempt into observable stages:
 
-1. Chennai VAC selected and calendar shown
-2. A bookable time row shown
-3. Submit accepted
-4. Consular scheduling reached
+1. Calendar loaded
+2. A bookable time row appeared
+3. Submit was clicked
+4. The selected slot was accepted
+5. The booking was completed
 
 The dashboard preserves active, removed, and research-only windows so failed
 experiments stay visible instead of disappearing from the record.

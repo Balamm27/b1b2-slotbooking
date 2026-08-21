@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "updatedAt": "2026-08-21T20:30:00.305Z",
   "attempts": [
     {
@@ -9,8 +9,9 @@
       "selectWindow": "1:25:50–1:26:10 PM",
       "calendar": "pass",
       "time": "pass",
-      "submit": "fail",
-      "consular": "pending",
+      "submitClicked": "pass",
+      "slotAccepted": "fail",
+      "bookingCompleted": "pending",
       "notes": "Calendar loaded and showed 09/25/2026 at 09:00 with availability 1. After selecting it and pressing Submit, the portal reported: ‘The selected appointment time is no longer available, please select another appointment time.’",
       "sourceUrl": "https://github.com/Balamm27/b1b2-slotbooking/issues/3"
     },
@@ -21,8 +22,9 @@
       "selectWindow": "8:55:50–8:56:10 AM",
       "calendar": "fail",
       "time": "pending",
-      "submit": "pending",
-      "consular": "pending",
+      "submitClicked": "pending",
+      "slotAccepted": "pending",
+      "bookingCompleted": "pending",
       "notes": "Chennai VAC immediately returned “No Slots Available”; the calendar did not render at all.",
       "sourceUrl": "https://github.com/Balamm27/b1b2-slotbooking/issues/2"
     },
@@ -33,8 +35,9 @@
       "selectWindow": "1:56 PM",
       "calendar": "pass",
       "time": "fail",
-      "submit": "pending",
-      "consular": "pending",
+      "submitClicked": "pending",
+      "slotAccepted": "pending",
+      "bookingCompleted": "pending",
       "notes": "Calendar appeared, but it seemed to be the same calendar carried over from the 1:26 PM attempt. No time slots were available.",
       "sourceUrl": "https://github.com/Balamm27/b1b2-slotbooking/issues/1"
     },
@@ -45,8 +48,9 @@
       "selectWindow": "1:25:50–1:26:10 PM",
       "calendar": "pass",
       "time": "pass",
-      "submit": "fail",
-      "consular": "pending",
+      "submitClicked": "pass",
+      "slotAccepted": "fail",
+      "bookingCompleted": "pending",
       "notes": "Logged in during the 1:23 PM slab. Time slots appeared, but the selected slot was gone by the time Submit was pressed."
     },
     {
@@ -56,8 +60,9 @@
       "selectWindow": "10:25:50–10:26:10 AM",
       "calendar": "fail",
       "time": "pending",
-      "submit": "pending",
-      "consular": "pending",
+      "submitClicked": "pending",
+      "slotAccepted": "pending",
+      "bookingCompleted": "pending",
       "notes": "No calendar appeared. Reported as a complete miss.",
       "inferred": true
     },
@@ -68,8 +73,9 @@
       "selectWindow": "10:55:50–10:56:10 AM",
       "calendar": "pass",
       "time": "pass",
-      "submit": "fail",
-      "consular": "pending",
+      "submitClicked": "pass",
+      "slotAccepted": "fail",
+      "bookingCompleted": "pending",
       "notes": "Time slot appeared, but Submit returned that the slot was already gone.",
       "inferred": true
     },
@@ -80,8 +86,9 @@
       "selectWindow": "8:55:50–8:56:10 PM",
       "calendar": "pass",
       "time": "fail",
-      "submit": "pending",
-      "consular": "pending",
+      "submitClicked": "pending",
+      "slotAccepted": "pending",
+      "bookingCompleted": "pending",
       "notes": "Repeated over several evenings: calendar dates appeared, but no time rows loaded.",
       "weight": 3,
       "inferred": true
@@ -93,8 +100,9 @@
       "selectWindow": "9:25:50–9:26:10 PM",
       "calendar": "pass",
       "time": "fail",
-      "submit": "pending",
-      "consular": "pending",
+      "submitClicked": "pending",
+      "slotAccepted": "pending",
+      "bookingCompleted": "pending",
       "notes": "Calendar appeared, but the time inventory was empty.",
       "inferred": true
     }
