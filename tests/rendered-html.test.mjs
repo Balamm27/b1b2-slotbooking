@@ -18,6 +18,7 @@ test("renders the Chennai Slot Lab dashboard shell", async () => {
   assert.match(html, /Calendar insights/);
   assert.match(html, /Slots seen/);
   assert.match(html, /10:26 PM/);
+  assert.match(html, /4:26 PM/);
   assert.match(html, /Submit clicked/);
   assert.match(html, /Slot accepted/);
   assert.match(html, /Booking completed/);

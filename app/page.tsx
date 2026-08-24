@@ -83,6 +83,7 @@ function normalizeAttempt(attempt: StoredAttempt): Attempt {
 }
 
 const bundledAttempts = (bundledData.attempts as StoredAttempt[]).map(normalizeAttempt);
+const latestBundledDate = bundledAttempts.map((attempt) => attempt.date).filter(isExactDate).sort().at(-1) ?? "2026-08-01";
 const gitDataUrl = "https://raw.githubusercontent.com/Balamm27/b1b2-slotbooking/refs/heads/feature/chennai-slot-dashboard/public/data/attempts.json";
 const newIssueUrl = "https://github.com/Balamm27/b1b2-slotbooking/issues/new";
 
@@ -93,6 +94,7 @@ const windows: WindowRow[] = [
   { window: "1:26 PM", login: "1:23:30–1:24:30", schedule: "1:25:15–1:25:35", select: "1:25:50–1:26:10", status: "active", basis: "Confirmed personal time-slot hit; Submit lost the race" },
   { window: "1:56 PM", login: "1:53:30–1:54:30", schedule: "1:55:15–1:55:35", select: "1:55:50–1:56:10", status: "active", basis: "Previously ranked candidate; source verification pending" },
   { window: "2:26 PM", login: "2:23:30–2:24:30", schedule: "2:25:15–2:25:35", select: "2:25:50–2:26:10", status: "active", basis: "Previously ranked candidate; source verification pending" },
+  { window: "4:26 PM", login: "4:23:30–4:24:30", schedule: "4:25:15–4:25:35", select: "4:25:50–4:26:10", status: "active", basis: "Confirmed slot acceptance; advanced past Submit but declined a late appointment" },
   { window: "10:26 PM", login: "10:23:30–10:24:30", schedule: "10:25:15–10:25:35", select: "10:25:50–10:26:10", status: "active", basis: "Confirmed personal time-slot hit; Submit lost the race" },
   { window: "8:56 PM", login: "8:53:30–8:54:30", schedule: "8:55:15–8:55:35", select: "8:55:50–8:56:10", status: "removed", basis: "Repeated stale calendars; no time rows" },
   { window: "9:26 PM", login: "9:23:30–9:24:30", schedule: "9:25:15–9:25:35", select: "9:25:50–9:26:10", status: "removed", basis: "Stale calendar; alert-only evidence" },
@@ -136,8 +138,8 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState<"windows" | "attempts" | "calendar">("windows");
-  const [calendarMonth, setCalendarMonth] = useState("2026-08");
-  const [selectedCalendarDate, setSelectedCalendarDate] = useState("2026-08-23");
+  const [calendarMonth, setCalendarMonth] = useState(latestBundledDate.slice(0, 7));
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState(latestBundledDate);
   const [selectedOutcome, setSelectedOutcome] = useState("noCalendar");
   const [attemptDate, setAttemptDate] = useState(() => new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Los_Angeles",
