@@ -13,6 +13,7 @@
       "slotAccepted": "fail",
       "bookingCompleted": "pending",
       "notes": "Calendar loaded and showed 12/08/2026 at 08:30 with availability 1. After selecting it and pressing Submit, the portal reported: ‘The selected appointment time is no longer available, please select another appointment time.’",
+      "slotsSeen": 1,
       "sourceUrl": "https://github.com/Balamm27/b1b2-slotbooking/issues/8"
     },
     {
@@ -26,6 +27,7 @@
       "slotAccepted": "pending",
       "bookingCompleted": "pending",
       "notes": "Chennai VAC displayed ‘No Slots Available’; the calendar did not render.",
+      "slotsSeen": 0,
       "sourceUrl": "https://github.com/Balamm27/b1b2-slotbooking/issues/7"
     },
     {
@@ -39,6 +41,7 @@
       "slotAccepted": "pending",
       "bookingCompleted": "pending",
       "notes": "Chennai VAC displayed ‘No Slots Available’; the calendar did not render.",
+      "slotsSeen": 0,
       "sourceUrl": "https://github.com/Balamm27/b1b2-slotbooking/issues/6"
     },
     {
@@ -52,6 +55,7 @@
       "slotAccepted": "fail",
       "bookingCompleted": "pending",
       "notes": "Calendar loaded and showed 09/25/2026 at 09:00 with availability 1. After selecting it and pressing Submit, the portal reported: ‘The selected appointment time is no longer available, please select another appointment time.’",
+      "slotsSeen": 1,
       "sourceUrl": "https://github.com/Balamm27/b1b2-slotbooking/issues/5"
     },
     {
@@ -65,6 +69,7 @@
       "slotAccepted": "pending",
       "bookingCompleted": "pending",
       "notes": "Chennai VAC displayed ‘No Slots Available’; the calendar did not render.",
+      "slotsSeen": 0,
       "sourceUrl": "https://github.com/Balamm27/b1b2-slotbooking/issues/4"
     },
     {
@@ -78,6 +83,7 @@
       "slotAccepted": "fail",
       "bookingCompleted": "pending",
       "notes": "Calendar loaded and showed 09/25/2026 at 09:00 with availability 1. After selecting it and pressing Submit, the portal reported: ‘The selected appointment time is no longer available, please select another appointment time.’",
+      "slotsSeen": 1,
       "sourceUrl": "https://github.com/Balamm27/b1b2-slotbooking/issues/3"
     },
     {
@@ -91,6 +97,7 @@
       "slotAccepted": "pending",
       "bookingCompleted": "pending",
       "notes": "Chennai VAC immediately returned “No Slots Available”; the calendar did not render at all.",
+      "slotsSeen": 0,
       "sourceUrl": "https://github.com/Balamm27/b1b2-slotbooking/issues/2"
     },
     {
@@ -104,6 +111,7 @@
       "slotAccepted": "pending",
       "bookingCompleted": "pending",
       "notes": "Calendar appeared, but it seemed to be the same calendar carried over from the 1:26 PM attempt. No time slots were available.",
+      "slotsSeen": 0,
       "sourceUrl": "https://github.com/Balamm27/b1b2-slotbooking/issues/1"
     },
     {
@@ -129,6 +137,7 @@
       "slotAccepted": "pending",
       "bookingCompleted": "pending",
       "notes": "No calendar appeared. Reported as a complete miss.",
+      "slotsSeen": 0,
       "inferred": true
     },
     {
@@ -155,6 +164,7 @@
       "slotAccepted": "pending",
       "bookingCompleted": "pending",
       "notes": "Repeated over several evenings: calendar dates appeared, but no time rows loaded.",
+      "slotsSeen": 0,
       "weight": 3,
       "inferred": true
     },
@@ -169,6 +179,7 @@
       "slotAccepted": "pending",
       "bookingCompleted": "pending",
       "notes": "Calendar appeared, but the time inventory was empty.",
+      "slotsSeen": 0,
       "inferred": true
     }
   ]

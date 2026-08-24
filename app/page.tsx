@@ -16,6 +16,7 @@ type Attempt = {
   slotAccepted: StageState;
   bookingCompleted: StageState;
   notes: string;
+  slotsSeen?: number;
   weight?: number;
   inferred?: boolean;
   sourceUrl?: string;
@@ -46,6 +47,8 @@ type CalendarDay = {
   calendarHits: number;
   timeHits: number;
   submitHits: number;
+  slotsSeen: number;
+  slotReports: number;
 };
 
 const stageLabels = ["No calendar", "Calendar appeared", "Time appeared", "Submit reached", "Slot accepted", "Booking completed"];
@@ -135,6 +138,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<"windows" | "attempts" | "calendar">("windows");
   const [calendarMonth, setCalendarMonth] = useState("2026-08");
   const [selectedCalendarDate, setSelectedCalendarDate] = useState("2026-08-23");
+  const [selectedOutcome, setSelectedOutcome] = useState("noCalendar");
   const [attemptDate, setAttemptDate] = useState(() => new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Los_Angeles",
     year: "numeric",
@@ -170,7 +174,7 @@ export default function Home() {
 
   const datedAttempts = attempts.filter((attempt) => isExactDate(attempt.date));
   const calendarDays = datedAttempts.reduce<Record<string, CalendarDay>>((days, attempt) => {
-    const day = days[attempt.date] ?? { date: attempt.date, attempts: [], runs: 0, stage: 0, calendarHits: 0, timeHits: 0, submitHits: 0 };
+    const day = days[attempt.date] ?? { date: attempt.date, attempts: [], runs: 0, stage: 0, calendarHits: 0, timeHits: 0, submitHits: 0, slotsSeen: 0, slotReports: 0 };
     const weight = attempt.weight ?? 1;
     day.attempts.push(attempt);
     day.runs += weight;
@@ -178,6 +182,10 @@ export default function Home() {
     if (attempt.calendar === "pass") day.calendarHits += weight;
     if (attempt.time === "pass") day.timeHits += weight;
     if (attempt.submitClicked === "pass") day.submitHits += weight;
+    if (typeof attempt.slotsSeen === "number") {
+      day.slotsSeen += attempt.slotsSeen;
+      day.slotReports += weight;
+    }
     days[attempt.date] = day;
     return days;
   }, {});
@@ -196,6 +204,8 @@ export default function Home() {
   const monthCalendarHits = monthDays.reduce((sum, day) => sum + day.calendarHits, 0);
   const monthTimeHits = monthDays.reduce((sum, day) => sum + day.timeHits, 0);
   const monthSubmitHits = monthDays.reduce((sum, day) => sum + day.submitHits, 0);
+  const monthSlotsSeen = monthDays.reduce((sum, day) => sum + day.slotsSeen, 0);
+  const monthSlotReports = monthDays.reduce((sum, day) => sum + day.slotReports, 0);
   const weekdayRollup = weekdayLabels.map((label, weekday) => {
     const days = observedDays.filter((day) => {
       const [year, month, date] = day.date.split("-").map(Number);
@@ -224,11 +234,14 @@ export default function Home() {
     const outcome = String(form.get("outcome"));
     const attemptedWindow = String(form.get("window"));
     const selectedWindow = windows.find((item) => item.window === attemptedWindow);
+    const rawSlotsSeen = String(form.get("slotsSeen") ?? "").trim();
+    const slotsSeen = rawSlotsSeen === "" ? (outcome === "noCalendar" || outcome === "calendarOnly" ? 0 : undefined) : Number(rawSlotsSeen);
     const next = {
       date: String(form.get("date")),
       window: attemptedWindow,
       selectWindow: selectedWindow?.select ?? attemptedWindow,
       ...outcomeMap[outcome],
+      ...(slotsSeen === undefined ? {} : { slotsSeen }),
       notes: String(form.get("notes") || outcomeLabels[outcome]),
     };
     const body = [
@@ -340,27 +353,29 @@ export default function Home() {
         {activeTab === "windows" ? (
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Window</th><th>Login range</th><th>Schedule click</th><th>Select Chennai</th><th>Runs</th><th>Calendar</th><th>Time</th><th>Submit clicked</th><th>Slot accepted</th><th>Booking completed</th><th>Status</th><th>Evidence</th></tr></thead>
+              <thead><tr><th>Window</th><th>Login range</th><th>Schedule click</th><th>Select Chennai</th><th>Runs</th><th>Calendar</th><th>Time</th><th>Slots seen</th><th>Submit clicked</th><th>Slot accepted</th><th>Booking completed</th><th>Status</th><th>Evidence</th></tr></thead>
               <tbody>{filteredWindows.map((item) => {
                 const related = attempts.filter((a) => a.window.toLowerCase() === item.window.toLowerCase());
                 const runs = weightedCount(related, () => true);
                 const cal = weightedCount(related, (a) => a.calendar === "pass");
                 const times = weightedCount(related, (a) => a.time === "pass");
+                const slots = related.reduce((sum, attempt) => sum + (attempt.slotsSeen ?? 0), 0);
+                const slotReports = weightedCount(related, (attempt) => typeof attempt.slotsSeen === "number");
                 const clicked = weightedCount(related, (a) => a.submitClicked === "pass");
                 const accepted = weightedCount(related, (a) => a.slotAccepted === "pass");
                 const booked = weightedCount(related, (a) => a.bookingCompleted === "pass");
                 return <tr key={item.window} className={item.status === "removed" ? "muted-row" : ""}>
-                  <td><strong>{item.window}</strong><small>Pacific</small></td><td>{item.login}</td><td>{item.schedule}</td><td className="select-time">{item.select}</td><td>{runs || "—"}</td><td>{runs ? `${Math.round(cal / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(times / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(clicked / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(accepted / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(booked / runs * 100)}%` : "—"}</td><td><span className={`status-chip ${item.status}`}>{item.status}</span></td><td className="evidence-cell">{item.basis}</td>
+                  <td><strong>{item.window}</strong><small>Pacific</small></td><td>{item.login}</td><td>{item.schedule}</td><td className="select-time">{item.select}</td><td>{runs || "—"}</td><td>{runs ? `${Math.round(cal / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(times / runs * 100)}%` : "—"}</td><td>{slotReports ? slots : "—"}</td><td>{runs ? `${Math.round(clicked / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(accepted / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(booked / runs * 100)}%` : "—"}</td><td><span className={`status-chip ${item.status}`}>{item.status}</span></td><td className="evidence-cell">{item.basis}</td>
                 </tr>;
               })}</tbody>
             </table>
           </div>
         ) : activeTab === "attempts" ? (
           <div className="attempt-list">
-            <div className="attempt-head"><span>Date / window</span><span>Calendar</span><span>Time</span><span>Submit clicked</span><span>Slot accepted</span><span>Booking completed</span><span>Observation</span></div>
+            <div className="attempt-head"><span>Date / window</span><span>Calendar</span><span>Time</span><span>Slots seen</span><span>Submit clicked</span><span>Slot accepted</span><span>Booking completed</span><span>Observation</span></div>
             {attempts.map((attempt) => <article className="attempt-row" key={attempt.id}>
               <div><strong>{attempt.window}</strong><span>{attempt.date}{attempt.weight ? ` · ${attempt.weight}× runs` : ""}{attempt.inferred ? " · verify date" : ""}</span></div>
-              <StatusMark state={attempt.calendar} /><StatusMark state={attempt.time} /><StatusMark state={attempt.submitClicked} /><StatusMark state={attempt.slotAccepted} /><StatusMark state={attempt.bookingCompleted} />
+              <StatusMark state={attempt.calendar} /><StatusMark state={attempt.time} /><strong className={`slot-count ${typeof attempt.slotsSeen === "number" ? "recorded" : "unknown"}`}>{typeof attempt.slotsSeen === "number" ? attempt.slotsSeen : "—"}</strong><StatusMark state={attempt.submitClicked} /><StatusMark state={attempt.slotAccepted} /><StatusMark state={attempt.bookingCompleted} />
               <p>{attempt.notes}{attempt.sourceUrl && <a className="source-link" href={attempt.sourceUrl} target="_blank" rel="noreferrer">GitHub record ↗</a>}</p>
             </article>)}
           </div>
@@ -375,9 +390,9 @@ export default function Home() {
                     const date = `${calendarMonth}-${String(day).padStart(2, "0")}`;
                     const insight = calendarDays[date];
                     const aria = insight ? `${formatCalendarDate(date, { month: "long", day: "numeric" })}, ${insight.runs} ${insight.runs === 1 ? "attempt" : "attempts"}, deepest stage ${stageLabels[insight.stage]}` : `${formatCalendarDate(date, { month: "long", day: "numeric" })}, no attempts`;
-                    return <button key={date} aria-label={aria} className={`calendar-day ${insight ? `observed level-${insight.stage}` : ""} ${selectedCalendarDate === date ? "selected" : ""}`} onClick={() => setSelectedCalendarDate(date)}>
+                    return <button key={date} aria-label={`${aria}${insight?.slotReports ? `, ${insight.slotsSeen} ${insight.slotsSeen === 1 ? "slot" : "slots"} seen` : ""}`} className={`calendar-day ${insight ? `observed level-${insight.stage}` : ""} ${selectedCalendarDate === date ? "selected" : ""}`} onClick={() => setSelectedCalendarDate(date)}>
                       <span className="day-number">{day}</span>
-                      {insight ? <><strong>{insight.runs}</strong><small>{insight.runs === 1 ? "attempt" : "attempts"}</small><i>{stageLabels[insight.stage]}</i></> : <small className="no-data">No data</small>}
+                      {insight ? <><strong>{insight.runs}</strong><small>{insight.runs === 1 ? "attempt" : "attempts"}</small><em>{insight.slotReports ? `${insight.slotsSeen} ${insight.slotsSeen === 1 ? "slot" : "slots"} seen` : "Slots unrecorded"}</em><i>{stageLabels[insight.stage]}</i></> : <small className="no-data">No data</small>}
                     </button>;
                   })}
                 </div>
@@ -390,9 +405,9 @@ export default function Home() {
                 <p className="eyebrow">Selected day</p>
                 <h3>{formatCalendarDate(selectedCalendarDate, { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</h3>
                 {selectedDay ? <>
-                  <div className="day-score"><span>Deepest stage</span><strong>{stageLabels[selectedDay.stage]}</strong><small>{selectedDay.runs} observed {selectedDay.runs === 1 ? "attempt" : "attempts"}</small></div>
+                  <div className="day-score"><span>Deepest stage</span><strong>{stageLabels[selectedDay.stage]}</strong><small>{selectedDay.runs} observed {selectedDay.runs === 1 ? "attempt" : "attempts"} · {selectedDay.slotReports ? `${selectedDay.slotsSeen} ${selectedDay.slotsSeen === 1 ? "slot" : "slots"} seen` : "slot count not recorded"}</small></div>
                   <div className="day-attempts">{selectedDay.attempts.map((attempt) => <article key={attempt.id}>
-                    <div><strong>{attempt.window}</strong><span>{stageLabels[attemptStage(attempt)]}</span></div>
+                    <div><strong>{attempt.window}</strong><span>{stageLabels[attemptStage(attempt)]}</span><b>{typeof attempt.slotsSeen === "number" ? `${attempt.slotsSeen} ${attempt.slotsSeen === 1 ? "slot" : "slots"}` : "Slots —"}</b></div>
                     <p>{attempt.notes}</p>
                   </article>)}</div>
                 </> : <div className="empty-day"><strong>No attempts logged.</strong><p>Select a colored day to inspect what happened, or log an attempt for this date.</p></div>}
@@ -405,6 +420,7 @@ export default function Home() {
               <article><span>Calendar hit rate</span><strong>{monthRuns ? Math.round(monthCalendarHits / monthRuns * 100) : 0}%</strong><small>{monthCalendarHits} calendar passes</small></article>
               <article><span>Time-row hit rate</span><strong>{monthRuns ? Math.round(monthTimeHits / monthRuns * 100) : 0}%</strong><small>{monthTimeHits} time-row passes</small></article>
               <article><span>Submit reach rate</span><strong>{monthRuns ? Math.round(monthSubmitHits / monthRuns * 100) : 0}%</strong><small>{monthSubmitHits} Submit clicks</small></article>
+              <article><span>Slots seen</span><strong>{monthSlotsSeen}</strong><small>reported in {monthSlotReports} {monthSlotReports === 1 ? "attempt" : "attempts"}</small></article>
             </div>
 
             <div className="weekday-patterns">
@@ -429,7 +445,8 @@ export default function Home() {
           <div className="form-head"><div><p className="eyebrow">New observation</p><h2>Log an attempt</h2></div><button type="button" aria-label="Close form" onClick={() => setShowForm(false)}>×</button></div>
           <label>Date<input name="date" type="date" required value={attemptDate} onChange={(event) => setAttemptDate(event.target.value)} /></label>
           <label>Attempted window<select name="window" required>{windows.map((item) => <option key={item.window}>{item.window}</option>)}</select></label>
-          <fieldset><legend>Deepest outcome reached</legend>{Object.entries(outcomeLabels).map(([value, label], index) => <label className="radio-row" key={value}><input type="radio" name="outcome" value={value} defaultChecked={index === 0} /><span><b>{label}</b><small>Stages before this are recorded as passed.</small></span></label>)}</fieldset>
+          <fieldset><legend>Deepest outcome reached</legend>{Object.entries(outcomeLabels).map(([value, label]) => <label className="radio-row" key={value}><input type="radio" name="outcome" value={value} checked={selectedOutcome === value} onChange={() => setSelectedOutcome(value)} /><span><b>{label}</b><small>Stages before this are recorded as passed.</small></span></label>)}</fieldset>
+          <label>Appointment slots seen<input name="slotsSeen" type="number" min="0" max="1000" step="1" placeholder={selectedOutcome === "noCalendar" ? "0" : "Enter the visible count"} /><small className="field-hint">Enter the number shown by the portal. Use 0 when the calendar appeared but no appointment time was listed; leave blank only when the count is unknown.</small></label>
           <label>Notes<textarea name="notes" placeholder="Dates shown, time selected, error message, loading behavior…" rows={3} /></label>
           <p className="git-note">Your entry will open as a prefilled GitHub issue. Review it and click <strong>Submit new issue</strong>; the repository workflow will then validate and store it permanently.</p>
           <div className="form-actions"><button type="button" className="ghost-button" onClick={() => setShowForm(false)}>Cancel</button><button className="primary-button" type="submit">Continue in GitHub ↗</button></div>

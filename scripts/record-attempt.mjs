@@ -42,6 +42,11 @@ for (const [stage, state] of Object.entries(normalizedStages)) {
   if (!stages.has(state)) throw new Error(`Invalid ${stage} state.`);
 }
 
+const slotsSeen = input.slotsSeen;
+if (slotsSeen !== undefined && (!Number.isInteger(slotsSeen) || slotsSeen < 0 || slotsSeen > 1000)) {
+  throw new Error("Slots seen must be a whole number from 0 to 1000.");
+}
+
 const dataPath = path.join(process.cwd(), "public", "data", "attempts.json");
 const data = JSON.parse(fs.readFileSync(dataPath, "utf8"));
 const id = `github-${issueNumber}`;
@@ -57,6 +62,7 @@ data.attempts.unshift({
   window: text(input.window, "window", 40),
   selectWindow: text(input.selectWindow, "select window", 60),
   ...normalizedStages,
+  ...(slotsSeen === undefined ? {} : { slotsSeen }),
   notes: text(input.notes, "notes", 1000),
   sourceUrl: `https://github.com/${repository}/issues/${issueNumber}`,
 });
