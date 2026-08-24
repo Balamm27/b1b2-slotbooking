@@ -38,6 +38,37 @@ type WindowRow = {
   basis: string;
 };
 
+type CalendarDay = {
+  date: string;
+  attempts: Attempt[];
+  runs: number;
+  stage: number;
+  calendarHits: number;
+  timeHits: number;
+  submitHits: number;
+};
+
+const stageLabels = ["No calendar", "Calendar appeared", "Time appeared", "Submit reached", "Slot accepted", "Booking completed"];
+const weekdayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+function attemptStage(attempt: Attempt) {
+  if (attempt.bookingCompleted === "pass") return 5;
+  if (attempt.slotAccepted === "pass") return 4;
+  if (attempt.submitClicked === "pass") return 3;
+  if (attempt.time === "pass") return 2;
+  if (attempt.calendar === "pass") return 1;
+  return 0;
+}
+
+function isExactDate(date: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(date);
+}
+
+function formatCalendarDate(date: string, options: Intl.DateTimeFormatOptions) {
+  const [year, month, day] = date.split("-").map(Number);
+  return new Intl.DateTimeFormat("en-US", { timeZone: "UTC", ...options }).format(new Date(Date.UTC(year, month - 1, day)));
+}
+
 function normalizeAttempt(attempt: StoredAttempt): Attempt {
   if (attempt.submitClicked && attempt.slotAccepted && attempt.bookingCompleted) return attempt as Attempt;
   return {
@@ -101,7 +132,9 @@ export default function Home() {
   const [statusFilter, setStatusFilter] = useState<"all" | WindowRow["status"]>("all");
   const [query, setQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [activeTab, setActiveTab] = useState<"windows" | "attempts">("windows");
+  const [activeTab, setActiveTab] = useState<"windows" | "attempts" | "calendar">("windows");
+  const [calendarMonth, setCalendarMonth] = useState("2026-08");
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState("2026-08-23");
   const [attemptDate, setAttemptDate] = useState(() => new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Los_Angeles",
     year: "numeric",
@@ -134,6 +167,50 @@ export default function Home() {
   const slotAcceptedHits = weightedCount(attempts, (a) => a.slotAccepted === "pass");
   const bookingHits = weightedCount(attempts, (a) => a.bookingCompleted === "pass");
   const deepestStage = bookingHits ? ["Booking completed", "100%"] : slotAcceptedHits ? ["Slot accepted", "80%"] : submitClickedHits ? ["Submit clicked", "60%"] : timeHits ? ["Time slot", "40%"] : calendarHits ? ["Calendar", "20%"] : ["Chennai queried", "5%"];
+
+  const datedAttempts = attempts.filter((attempt) => isExactDate(attempt.date));
+  const calendarDays = datedAttempts.reduce<Record<string, CalendarDay>>((days, attempt) => {
+    const day = days[attempt.date] ?? { date: attempt.date, attempts: [], runs: 0, stage: 0, calendarHits: 0, timeHits: 0, submitHits: 0 };
+    const weight = attempt.weight ?? 1;
+    day.attempts.push(attempt);
+    day.runs += weight;
+    day.stage = Math.max(day.stage, attemptStage(attempt));
+    if (attempt.calendar === "pass") day.calendarHits += weight;
+    if (attempt.time === "pass") day.timeHits += weight;
+    if (attempt.submitClicked === "pass") day.submitHits += weight;
+    days[attempt.date] = day;
+    return days;
+  }, {});
+  const observedDays = Object.values(calendarDays);
+  const latestObservedDate = observedDays.map((day) => day.date).sort().at(-1);
+  const [calendarYear, calendarMonthNumber] = calendarMonth.split("-").map(Number);
+  const firstWeekday = new Date(Date.UTC(calendarYear, calendarMonthNumber - 1, 1)).getUTCDay();
+  const daysInMonth = new Date(Date.UTC(calendarYear, calendarMonthNumber, 0)).getUTCDate();
+  const calendarCells = Array.from({ length: 42 }, (_, index) => {
+    const day = index - firstWeekday + 1;
+    return day > 0 && day <= daysInMonth ? day : null;
+  });
+  const selectedDay = calendarDays[selectedCalendarDate];
+  const monthDays = observedDays.filter((day) => day.date.startsWith(calendarMonth));
+  const monthRuns = monthDays.reduce((sum, day) => sum + day.runs, 0);
+  const monthCalendarHits = monthDays.reduce((sum, day) => sum + day.calendarHits, 0);
+  const monthTimeHits = monthDays.reduce((sum, day) => sum + day.timeHits, 0);
+  const monthSubmitHits = monthDays.reduce((sum, day) => sum + day.submitHits, 0);
+  const weekdayRollup = weekdayLabels.map((label, weekday) => {
+    const days = observedDays.filter((day) => {
+      const [year, month, date] = day.date.split("-").map(Number);
+      return new Date(Date.UTC(year, month - 1, date)).getUTCDay() === weekday;
+    });
+    return { label, days: days.length, runs: days.reduce((sum, day) => sum + day.runs, 0), stage: days.reduce((deepest, day) => Math.max(deepest, day.stage), 0) };
+  });
+
+  function changeCalendarMonth(offset: number) {
+    const next = new Date(Date.UTC(calendarYear, calendarMonthNumber - 1 + offset, 1));
+    const nextMonth = `${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, "0")}`;
+    const firstObservedDate = observedDays.map((day) => day.date).filter((date) => date.startsWith(nextMonth)).sort()[0];
+    setCalendarMonth(nextMonth);
+    setSelectedCalendarDate(firstObservedDate ?? `${nextMonth}-01`);
+  }
 
   const filteredWindows = windows.filter((item) => {
     const matchesStatus = statusFilter === "all" || item.status === statusFilter;
@@ -220,7 +297,7 @@ export default function Home() {
       <section className="funnel-panel">
         <div className="section-heading">
           <div><p className="eyebrow">Conversion funnel</p><h2>Where luck runs out</h2></div>
-          <span className="updated">Updated Aug 21, 2026</span>
+          <span className="updated">Updated {latestObservedDate ? formatCalendarDate(latestObservedDate, { month: "short", day: "numeric", year: "numeric" }) : "when new evidence arrives"}</span>
         </div>
         <div className="funnel">
           {[
@@ -245,12 +322,18 @@ export default function Home() {
           <div className="tabs" role="tablist">
             <button className={activeTab === "windows" ? "active" : ""} onClick={() => setActiveTab("windows")}>Window board <span>{windows.length}</span></button>
             <button className={activeTab === "attempts" ? "active" : ""} onClick={() => setActiveTab("attempts")}>Attempt log <span>{attempts.length}</span></button>
+            <button className={activeTab === "calendar" ? "active" : ""} onClick={() => setActiveTab("calendar")}>Calendar insights <span>{observedDays.length}</span></button>
           </div>
           {activeTab === "windows" && <div className="filters">
             <input aria-label="Search windows" placeholder="Search windows…" value={query} onChange={(e) => setQuery(e.target.value)} />
             <select aria-label="Filter status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}>
               <option value="all">All statuses</option><option value="active">Active</option><option value="removed">Removed</option><option value="research">Research only</option>
             </select>
+          </div>}
+          {activeTab === "calendar" && <div className="calendar-nav" aria-label="Calendar month navigation">
+            <button aria-label="Previous month" onClick={() => changeCalendarMonth(-1)}>←</button>
+            <strong>{new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(calendarYear, calendarMonthNumber - 1, 1)))}</strong>
+            <button aria-label="Next month" onClick={() => changeCalendarMonth(1)}>→</button>
           </div>}
         </div>
 
@@ -272,7 +355,7 @@ export default function Home() {
               })}</tbody>
             </table>
           </div>
-        ) : (
+        ) : activeTab === "attempts" ? (
           <div className="attempt-list">
             <div className="attempt-head"><span>Date / window</span><span>Calendar</span><span>Time</span><span>Submit clicked</span><span>Slot accepted</span><span>Booking completed</span><span>Observation</span></div>
             {attempts.map((attempt) => <article className="attempt-row" key={attempt.id}>
@@ -280,6 +363,55 @@ export default function Home() {
               <StatusMark state={attempt.calendar} /><StatusMark state={attempt.time} /><StatusMark state={attempt.submitClicked} /><StatusMark state={attempt.slotAccepted} /><StatusMark state={attempt.bookingCompleted} />
               <p>{attempt.notes}{attempt.sourceUrl && <a className="source-link" href={attempt.sourceUrl} target="_blank" rel="noreferrer">GitHub record ↗</a>}</p>
             </article>)}
+          </div>
+        ) : (
+          <div className="calendar-insights">
+            <div className="calendar-overview">
+              <div className="calendar-shell">
+                <div className="calendar-weekdays">{weekdayLabels.map((day) => <span key={day}>{day}</span>)}</div>
+                <div className="calendar-grid">
+                  {calendarCells.map((day, index) => {
+                    if (!day) return <span className="calendar-blank" key={`blank-${index}`} />;
+                    const date = `${calendarMonth}-${String(day).padStart(2, "0")}`;
+                    const insight = calendarDays[date];
+                    const aria = insight ? `${formatCalendarDate(date, { month: "long", day: "numeric" })}, ${insight.runs} ${insight.runs === 1 ? "attempt" : "attempts"}, deepest stage ${stageLabels[insight.stage]}` : `${formatCalendarDate(date, { month: "long", day: "numeric" })}, no attempts`;
+                    return <button key={date} aria-label={aria} className={`calendar-day ${insight ? `observed level-${insight.stage}` : ""} ${selectedCalendarDate === date ? "selected" : ""}`} onClick={() => setSelectedCalendarDate(date)}>
+                      <span className="day-number">{day}</span>
+                      {insight ? <><strong>{insight.runs}</strong><small>{insight.runs === 1 ? "attempt" : "attempts"}</small><i>{stageLabels[insight.stage]}</i></> : <small className="no-data">No data</small>}
+                    </button>;
+                  })}
+                </div>
+                <div className="calendar-legend">
+                  {stageLabels.map((label, index) => <span key={label}><i className={`level-${index}`} />{label}</span>)}
+                </div>
+              </div>
+
+              <aside className="day-detail">
+                <p className="eyebrow">Selected day</p>
+                <h3>{formatCalendarDate(selectedCalendarDate, { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</h3>
+                {selectedDay ? <>
+                  <div className="day-score"><span>Deepest stage</span><strong>{stageLabels[selectedDay.stage]}</strong><small>{selectedDay.runs} observed {selectedDay.runs === 1 ? "attempt" : "attempts"}</small></div>
+                  <div className="day-attempts">{selectedDay.attempts.map((attempt) => <article key={attempt.id}>
+                    <div><strong>{attempt.window}</strong><span>{stageLabels[attemptStage(attempt)]}</span></div>
+                    <p>{attempt.notes}</p>
+                  </article>)}</div>
+                </> : <div className="empty-day"><strong>No attempts logged.</strong><p>Select a colored day to inspect what happened, or log an attempt for this date.</p></div>}
+              </aside>
+            </div>
+
+            <div className="calendar-stats">
+              <article><span>Observed days</span><strong>{monthDays.length}</strong><small>with exact dates this month</small></article>
+              <article><span>Attempts</span><strong>{monthRuns}</strong><small>across observed days</small></article>
+              <article><span>Calendar hit rate</span><strong>{monthRuns ? Math.round(monthCalendarHits / monthRuns * 100) : 0}%</strong><small>{monthCalendarHits} calendar passes</small></article>
+              <article><span>Time-row hit rate</span><strong>{monthRuns ? Math.round(monthTimeHits / monthRuns * 100) : 0}%</strong><small>{monthTimeHits} time-row passes</small></article>
+              <article><span>Submit reach rate</span><strong>{monthRuns ? Math.round(monthSubmitHits / monthRuns * 100) : 0}%</strong><small>{monthSubmitHits} Submit clicks</small></article>
+            </div>
+
+            <div className="weekday-patterns">
+              <div><p className="eyebrow">Weekday pattern</p><h3>Evidence by day of week</h3><p>Color shows the deepest stage ever reached; counts show the current sample size.</p></div>
+              <div className="weekday-strip">{weekdayRollup.map((day) => <article key={day.label} className={day.runs ? `level-${day.stage}` : "empty"}><strong>{day.label}</strong><span>{day.runs || "—"}</span><small>{day.runs ? `${day.runs} ${day.runs === 1 ? "run" : "runs"}` : "No data"}</small></article>)}</div>
+              <p className="sample-warning"><strong>Early signal only.</strong> {observedDays.length} exact-date days are not enough to establish a dependable weekday pattern. This view will become more meaningful as attempts accumulate.</p>
+            </div>
           </div>
         )}
       </section>
