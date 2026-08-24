@@ -1,7 +1,20 @@
 {
   "schemaVersion": 2,
-  "updatedAt": "2026-08-22T03:58:41.087Z",
+  "updatedAt": "2026-08-24T03:58:13.157Z",
   "attempts": [
+    {
+      "id": "github-7",
+      "date": "2026-08-23",
+      "window": "8:56 PM",
+      "selectWindow": "8:55:50–8:56:10 PM",
+      "calendar": "fail",
+      "time": "pending",
+      "submitClicked": "pending",
+      "slotAccepted": "pending",
+      "bookingCompleted": "pending",
+      "notes": "Chennai VAC displayed ‘No Slots Available’; the calendar did not render.",
+      "sourceUrl": "https://github.com/Balamm27/b1b2-slotbooking/issues/7"
+    },
     {
       "id": "github-6",
       "date": "2026-08-21",
