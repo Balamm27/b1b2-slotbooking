@@ -102,6 +102,7 @@ const windows: WindowRow[] = [
   { window: "7:26 AM", login: "7:23:30–7:24:30", schedule: "7:25:15–7:25:35", select: "7:25:50–7:26:10", status: "research", basis: "Delayed alert only; no confirmed booking" },
   { window: "9:26 AM", login: "9:23:30–9:24:30", schedule: "9:25:15–9:25:35", select: "9:25:50–9:26:10", status: "research", basis: "Delayed alert only; no confirmed booking" },
   { window: "11:26 AM", login: "11:23:30–11:24:30", schedule: "11:25:15–11:25:35", select: "11:25:50–11:26:10", status: "research", basis: "Delayed alert only; removed from ranking" },
+  { window: "11:26 PM", login: "11:23:30–11:24:30", schedule: "11:25:15–11:25:35", select: "11:25:50–11:26:10", status: "research", basis: "One confirmed complete miss; no calendar or time inventory" },
 ];
 
 const outcomeMap: Record<string, Pick<Attempt, "calendar" | "time" | "submitClicked" | "slotAccepted" | "bookingCompleted">> = {
