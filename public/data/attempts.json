@@ -1,7 +1,21 @@
 {
   "schemaVersion": 2,
-  "updatedAt": "2026-08-24T23:29:08.615Z",
+  "updatedAt": "2026-08-25T05:57:36.697Z",
   "attempts": [
+    {
+      "id": "github-10",
+      "date": "2026-08-24",
+      "window": "10:56 PM",
+      "selectWindow": "10:55:50–10:56:10 PM",
+      "calendar": "fail",
+      "time": "pending",
+      "submitClicked": "pending",
+      "slotAccepted": "pending",
+      "bookingCompleted": "pending",
+      "slotsSeen": 0,
+      "notes": "After selecting Chennai VAC, the portal immediately displayed ‘No Slots Available’. The calendar did not render and no appointment times were shown.",
+      "sourceUrl": "https://github.com/Balamm27/b1b2-slotbooking/issues/10"
+    },
     {
       "id": "github-9",
       "date": "2026-08-24",
