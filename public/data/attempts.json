@@ -1,7 +1,24 @@
 {
   "schemaVersion": 3,
-  "updatedAt": "2026-08-27T21:58:22.985Z",
+  "updatedAt": "2026-08-27T22:36:53.928Z",
   "attempts": [
+    {
+      "id": "github-19",
+      "date": "2026-08-27",
+      "window": "3:28 PM",
+      "selectWindow": "3:28 PM",
+      "calendar": "pass",
+      "time": "pass",
+      "submitClicked": "pass",
+      "slotAccepted": "pass",
+      "consularCalendar": "pass",
+      "consularTime": "pass",
+      "consularSubmitClicked": "pass",
+      "bookingCompleted": "fail",
+      "consularSlotsSeen": 1,
+      "notes": "The prior February 1, 2027 VAC hold had expired, so the workflow restarted at Chennai VAC. A new VAC appointment was selected and accepted, advancing to Chennai Consular Posts. The consular calendar loaded with one appointment: December 29, 2026 at 08:15, availability 1. After selecting it and clicking Submit, the portal reported: ‘The selected appointment time is no longer available, please select another appointment time.’ The VAC date and visible VAC slot count were not recorded.",
+      "sourceUrl": "https://github.com/Balamm27/b1b2-slotbooking/issues/19"
+    },
     {
       "id": "github-18",
       "date": "2026-08-27",
