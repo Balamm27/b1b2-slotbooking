@@ -1,7 +1,24 @@
 {
   "schemaVersion": 3,
-  "updatedAt": "2026-08-27T22:36:53.928Z",
+  "updatedAt": "2026-08-27T23:51:55.666Z",
   "attempts": [
+    {
+      "id": "github-20",
+      "date": "2026-08-27",
+      "window": "4:26 PM",
+      "selectWindow": "4:25:50–4:26:10 PM",
+      "calendar": "fail",
+      "time": "pending",
+      "submitClicked": "pending",
+      "slotAccepted": "pending",
+      "consularCalendar": "pending",
+      "consularTime": "pending",
+      "consularSubmitClicked": "pending",
+      "bookingCompleted": "pending",
+      "slotsSeen": 0,
+      "notes": "The previous OFC hold had expired, so the workflow restarted at Chennai VAC. During the 4:26 PM attempt, selecting Chennai VAC returned no availability; the VAC calendar did not appear and the consular stage was not reached.",
+      "sourceUrl": "https://github.com/Balamm27/b1b2-slotbooking/issues/20"
+    },
     {
       "id": "github-19",
       "date": "2026-08-27",
