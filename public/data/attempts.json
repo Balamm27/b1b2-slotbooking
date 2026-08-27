@@ -1,7 +1,21 @@
 {
   "schemaVersion": 2,
-  "updatedAt": "2026-08-27T18:01:35.919Z",
+  "updatedAt": "2026-08-27T19:59:55.799Z",
   "attempts": [
+    {
+      "id": "github-15",
+      "date": "2026-08-27",
+      "window": "12:56 PM",
+      "selectWindow": "12:55:45–12:55:56 PM",
+      "calendar": "pass",
+      "time": "pass",
+      "submitClicked": "pending",
+      "slotAccepted": "pending",
+      "bookingCompleted": "pending",
+      "slotsSeen": 1,
+      "notes": "Using the same timed-click strategy, the calendar loaded and one appointment time was visible for April 1, 2027. The applicant intentionally skipped it because the date was too far out and is seeking an earlier appointment.",
+      "sourceUrl": "https://github.com/Balamm27/b1b2-slotbooking/issues/15"
+    },
     {
       "id": "github-14",
       "date": "2026-08-27",
