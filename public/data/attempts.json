@@ -1,7 +1,25 @@
 {
   "schemaVersion": 3,
-  "updatedAt": "2026-08-27T20:57:26.017Z",
+  "updatedAt": "2026-08-27T21:36:10.979Z",
   "attempts": [
+    {
+      "id": "github-17",
+      "date": "2026-08-27",
+      "window": "2:26 PM",
+      "selectWindow": "2:25:50–2:26:10 PM",
+      "calendar": "pass",
+      "time": "pass",
+      "submitClicked": "pass",
+      "slotAccepted": "pass",
+      "consularCalendar": "fail",
+      "consularTime": "pending",
+      "consularSubmitClicked": "pending",
+      "bookingCompleted": "pending",
+      "slotsSeen": 1,
+      "consularSlotsSeen": 0,
+      "notes": "The Chennai VAC stage succeeded and the February 1, 2027 appointment advanced to the Consular Posts page. After selecting Chennai as the consular post, the portal displayed ‘No Slots Available’; no consular calendar or interview time appeared, so the overall booking could not be completed.",
+      "sourceUrl": "https://github.com/Balamm27/b1b2-slotbooking/issues/17"
+    },
     {
       "id": "github-16",
       "date": "2026-08-27",
