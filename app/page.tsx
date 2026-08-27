@@ -123,6 +123,7 @@ const windows: WindowRow[] = [
   { window: "1:26 PM", login: "1:23:30–1:24:30", schedule: "1:25:15–1:25:35", select: "1:25:50–1:26:10", status: "active", basis: "Confirmed personal time-slot hit; Submit lost the race" },
   { window: "1:56 PM", login: "1:53:30–1:54:30", schedule: "1:55:15–1:55:35", select: "1:55:50–1:56:10", status: "research", basis: "Three confirmed attempts: one calendar-only result and two complete misses" },
   { window: "2:26 PM", login: "2:23:30–2:24:30", schedule: "2:25:15–2:25:35", select: "2:25:50–2:26:10", status: "active", basis: "Two confirmed VAC time hits; latest VAC accepted but Chennai consular inventory was unavailable" },
+  { window: "3:28 PM", login: "Not recorded", schedule: "Not recorded", select: "Around 3:28 PM", status: "research", basis: "One confirmed run reached a new VAC and one Chennai consular time; Consular Submit lost the one-slot race" },
   { window: "4:26 PM", login: "4:23:30–4:24:30", schedule: "4:25:15–4:25:35", select: "4:25:50–4:26:10", status: "active", basis: "Confirmed slot acceptance; advanced past Submit but declined a late appointment" },
   { window: "10:26 PM", login: "10:23:30–10:24:30", schedule: "10:25:15–10:25:35", select: "10:25:50–10:26:10", status: "active", basis: "Confirmed personal time-slot hit; Submit lost the race" },
   { window: "8:56 PM", login: "8:53:30–8:54:30", schedule: "8:55:15–8:55:35", select: "8:55:50–8:56:10", status: "removed", basis: "Repeated stale calendars; no time rows" },
