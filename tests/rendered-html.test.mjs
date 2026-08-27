@@ -16,12 +16,15 @@ test("renders the Chennai Slot Lab dashboard shell", async () => {
   assert.match(html, /Turn every booking attempt/);
   assert.match(html, /Window board/);
   assert.match(html, /Calendar insights/);
-  assert.match(html, /Slots seen/);
+  assert.match(html, /VAC slots/);
   assert.match(html, /10:26 PM/);
   assert.match(html, /4:26 PM/);
   assert.match(html, /11:26 PM/);
-  assert.match(html, /Submit clicked/);
-  assert.match(html, /Slot accepted/);
+  assert.match(html, /VAC Submit/);
+  assert.match(html, /VAC accepted/);
+  assert.match(html, /Consular calendar/);
+  assert.match(html, /Consular time/);
+  assert.match(html, /Consular Submit/);
   assert.match(html, /Booking completed/);
   assert.match(html, /Syncing with Git/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/);

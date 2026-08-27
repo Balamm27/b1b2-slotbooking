@@ -3,11 +3,17 @@
 A local-first evidence dashboard for tracking first-time B1/B2 appointment
 attempts at Chennai VAC. It separates each attempt into observable stages:
 
-1. Calendar loaded
-2. A bookable time row appeared
-3. Submit was clicked
-4. The selected slot was accepted
-5. The booking was completed
+1. VAC calendar loaded
+2. A VAC time row appeared
+3. VAC Submit was clicked
+4. The VAC slot was accepted and the consular page was reached
+5. Consular calendar loaded
+6. A consular time row appeared
+7. Consular Submit was clicked
+8. The booking was completed
+
+VAC and consular slot counts are recorded separately because clearing the VAC
+stage does not guarantee interview inventory is available.
 
 The dashboard preserves active, removed, and research-only windows so failed
 experiments stay visible instead of disappearing from the record.
