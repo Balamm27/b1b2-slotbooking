@@ -124,7 +124,7 @@ const gitDataUrl = "https://raw.githubusercontent.com/Balamm27/b1b2-slotbooking/
 const newIssueUrl = "https://github.com/Balamm27/b1b2-slotbooking/issues/new";
 
 const windows: WindowRow[] = [
-  { window: "8:56 AM", login: "8:53:30–8:54:30", schedule: "8:55:15–8:55:35", select: "8:55:50–8:56:10", status: "removed", basis: "Two confirmed complete misses; no calendar or time inventory" },
+  { window: "8:56 AM", login: "8:53:30–8:54:30", schedule: "8:55:15–8:55:35", select: "8:55:50–8:56:10", status: "research", basis: "Mixed evidence: two no-calendar misses, followed by a May 2027 OFC option that was skipped as too late" },
   { window: "10:26 AM", login: "10:23:30–10:24:30", schedule: "10:25:15–10:25:35", select: "10:25:50–10:26:10", status: "active", basis: "Personal miss; earlier ranking retained for comparison" },
   { window: "10:56 AM", login: "10:53:30–10:54:30", schedule: "10:55:15–10:55:35", select: "10:55:50–10:56:10", status: "active", basis: "Personal time-slot hit; Submit lost race" },
   { window: "12:56 PM", login: "12:53:30–12:54:30", schedule: "12:55:15–12:55:35", select: "12:55:50–12:56:10", status: "active", basis: "One confirmed VAC time hit; April 2027 slot intentionally skipped" },
