@@ -1,7 +1,24 @@
 {
   "schemaVersion": 3,
-  "updatedAt": "2026-08-28T16:02:33.619Z",
+  "updatedAt": "2026-08-28T23:30:04.784Z",
   "attempts": [
+    {
+      "id": "github-24",
+      "date": "2026-08-28",
+      "window": "4:26 PM",
+      "selectWindow": "4:25:50–4:26:10 PM",
+      "calendar": "fail",
+      "time": "fail",
+      "submitClicked": "pending",
+      "slotAccepted": "pending",
+      "consularCalendar": "pending",
+      "consularTime": "pending",
+      "consularSubmitClicked": "pending",
+      "bookingCompleted": "pending",
+      "slotsSeen": 0,
+      "notes": "Chennai OFC returned no slots immediately; the calendar did not load. No OFC time was visible and no later stage was reached.",
+      "sourceUrl": "https://github.com/Balamm27/b1b2-slotbooking/issues/24"
+    },
     {
       "id": "github-23",
       "date": "2026-08-28",
