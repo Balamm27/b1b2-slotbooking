@@ -19,6 +19,7 @@ test("renders the Chennai Slot Lab dashboard shell", async () => {
   assert.match(html, /VAC slots/);
   assert.match(html, /10:26 PM/);
   assert.match(html, /4:26 PM/);
+  assert.match(html, /7:56 PM/);
   assert.match(html, /11:26 PM/);
   assert.match(html, /VAC Submit/);
   assert.match(html, /VAC accepted/);
@@ -32,6 +33,7 @@ test("renders the Chennai Slot Lab dashboard shell", async () => {
   assert.ok(html.indexOf("6:56 AM") < html.indexOf("12:56 PM"));
   assert.ok(html.indexOf("12:56 PM") < html.indexOf("3:28 PM"));
   assert.ok(html.indexOf("3:28 PM") < html.indexOf("11:26 PM"));
+  assert.ok(html.indexOf("4:26 PM") < html.indexOf("7:56 PM"));
   assert.match(html, /Syncing with Git/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/);
 });
