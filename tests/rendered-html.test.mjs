@@ -26,6 +26,12 @@ test("renders the Chennai Slot Lab dashboard shell", async () => {
   assert.match(html, /Consular time/);
   assert.match(html, /Consular Submit/);
   assert.match(html, /Booking completed/);
+  assert.match(html, /window-row status-active/);
+  assert.match(html, /window-row status-research/);
+  assert.match(html, /window-row status-removed/);
+  assert.ok(html.indexOf("6:56 AM") < html.indexOf("12:56 PM"));
+  assert.ok(html.indexOf("12:56 PM") < html.indexOf("3:28 PM"));
+  assert.ok(html.indexOf("3:28 PM") < html.indexOf("11:26 PM"));
   assert.match(html, /Syncing with Git/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/);
 });

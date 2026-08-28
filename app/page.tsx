@@ -93,6 +93,14 @@ function isExactDate(date: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(date);
 }
 
+function windowMinutes(window: string) {
+  const match = window.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match) return Number.MAX_SAFE_INTEGER;
+  const [, rawHour, rawMinute, period] = match;
+  const hour = Number(rawHour) % 12 + (period.toUpperCase() === "PM" ? 12 : 0);
+  return hour * 60 + Number(rawMinute);
+}
+
 function formatCalendarDate(date: string, options: Intl.DateTimeFormatOptions) {
   const [year, month, day] = date.split("-").map(Number);
   return new Intl.DateTimeFormat("en-US", { timeZone: "UTC", ...options }).format(new Date(Date.UTC(year, month - 1, day)));
@@ -279,11 +287,13 @@ export default function Home() {
     setSelectedCalendarDate(firstObservedDate ?? `${nextMonth}-01`);
   }
 
-  const filteredWindows = windows.filter((item) => {
-    const matchesStatus = statusFilter === "all" || item.status === statusFilter;
-    const haystack = `${item.window} ${item.basis} ${item.status}`.toLowerCase();
-    return matchesStatus && haystack.includes(query.toLowerCase());
-  });
+  const filteredWindows = windows
+    .filter((item) => {
+      const matchesStatus = statusFilter === "all" || item.status === statusFilter;
+      const haystack = `${item.window} ${item.basis} ${item.status}`.toLowerCase();
+      return matchesStatus && haystack.includes(query.toLowerCase());
+    })
+    .sort((a, b) => windowMinutes(a.window) - windowMinutes(b.window));
 
   function addAttempt(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -434,7 +444,7 @@ export default function Home() {
                 const consularSlotReports = weightedCount(related, (attempt) => typeof attempt.consularSlotsSeen === "number");
                 const consularSubmitted = weightedCount(related, (a) => a.consularSubmitClicked === "pass");
                 const booked = weightedCount(related, (a) => a.bookingCompleted === "pass");
-                return <tr key={item.window} className={item.status === "removed" ? "muted-row" : ""}>
+                return <tr key={item.window} className={`window-row status-${item.status}`}>
                   <td><strong>{item.window}</strong><small>Pacific</small></td><td>{item.login}</td><td>{item.schedule}</td><td className="select-time">{item.select}</td><td>{runs || "—"}</td><td>{runs ? `${Math.round(cal / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(times / runs * 100)}%` : "—"}</td><td>{slotReports ? slots : "—"}</td><td>{runs ? `${Math.round(clicked / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(accepted / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(consularCalendars / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(consularTimes / runs * 100)}%` : "—"}</td><td>{consularSlotReports ? consularSlots : "—"}</td><td>{runs ? `${Math.round(consularSubmitted / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(booked / runs * 100)}%` : "—"}</td><td><span className={`status-chip ${item.status}`}>{item.status}</span></td><td className="evidence-cell">{item.basis}</td>
                 </tr>;
               })}</tbody>
