@@ -1,7 +1,24 @@
 {
   "schemaVersion": 3,
-  "updatedAt": "2026-08-28T13:43:16.868Z",
+  "updatedAt": "2026-08-28T16:02:33.619Z",
   "attempts": [
+    {
+      "id": "github-23",
+      "date": "2026-08-28",
+      "window": "8:56 AM",
+      "selectWindow": "8:55:50–8:56:10 AM",
+      "calendar": "pass",
+      "time": "pass",
+      "submitClicked": "pending",
+      "slotAccepted": "pending",
+      "consularCalendar": "pending",
+      "consularTime": "pending",
+      "consularSubmitClicked": "pending",
+      "bookingCompleted": "pending",
+      "slotsSeen": 1,
+      "notes": "Chennai OFC calendar loaded and at least one appointment option was visible in May 2027 (year inferred because May 2026 has passed). Applicant intentionally closed the page without selecting or submitting because the date was too far out.",
+      "sourceUrl": "https://github.com/Balamm27/b1b2-slotbooking/issues/23"
+    },
     {
       "id": "github-21",
       "date": "2026-08-27",
