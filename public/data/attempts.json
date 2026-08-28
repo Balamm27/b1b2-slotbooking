@@ -1,7 +1,25 @@
 {
   "schemaVersion": 3,
-  "updatedAt": "2026-08-27T23:51:55.666Z",
+  "updatedAt": "2026-08-28T13:43:16.868Z",
   "attempts": [
+    {
+      "id": "github-21",
+      "date": "2026-08-27",
+      "window": "7:56 PM",
+      "selectWindow": "7:55:50–7:56:10 PM",
+      "calendar": "pass",
+      "time": "pass",
+      "submitClicked": "pass",
+      "slotAccepted": "pass",
+      "consularCalendar": "fail",
+      "consularTime": "pending",
+      "consularSubmitClicked": "pending",
+      "bookingCompleted": "pending",
+      "slotsSeen": 55,
+      "consularSlotsSeen": 0,
+      "notes": "A surprisingly large Chennai VAC batch appeared during the 7:56 PM window. Approximately 50–60 OFC appointment slots were visible; 55 is recorded as an estimated midpoint rather than an exact count. A VAC date/time was selected, Submit succeeded, and the workflow advanced to Chennai Consular Posts. After selecting Chennai, no consular calendar or interview times were available, so the pairing could not be completed.",
+      "sourceUrl": "https://github.com/Balamm27/b1b2-slotbooking/issues/21"
+    },
     {
       "id": "github-20",
       "date": "2026-08-27",
