@@ -1,7 +1,23 @@
 {
   "schemaVersion": 3,
-  "updatedAt": "2026-08-28T23:30:04.784Z",
+  "updatedAt": "2026-09-17T05:32:07.000Z",
   "attempts": [
+    {
+      "id": "manual-2026-09-16-1026pm",
+      "date": "2026-09-16",
+      "window": "10:26 PM",
+      "selectWindow": "10:25:50–10:26:10 PM",
+      "calendar": "pass",
+      "time": "pass",
+      "submitClicked": "pass",
+      "slotAccepted": "fail",
+      "consularCalendar": "pending",
+      "consularTime": "pending",
+      "consularSubmitClicked": "pending",
+      "bookingCompleted": "pending",
+      "slotsSeen": 3,
+      "notes": "Reported at 10:56 AM IST on Sep 17 (10:26 PM Seattle on Sep 16). For a two-applicant group, Chennai OFC showed three Oct 13, 2026 time rows: 11:30 (displayed availability 11), 12:00 (3), and 12:30 (6). After selecting a time and clicking Submit, the portal said the selected slot was no longer available. The screenshot shows the pre-submit inventory; the rejection is based on the applicant's report. No VAC booking was accepted and the consular stage was not reached."
+    },
     {
       "id": "github-24",
       "date": "2026-08-28",
