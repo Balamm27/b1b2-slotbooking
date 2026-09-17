@@ -16,6 +16,9 @@ test("renders the Chennai Slot Lab dashboard shell", async () => {
   assert.match(html, /Turn every booking attempt/);
   assert.match(html, /Window board/);
   assert.match(html, /Calendar insights/);
+  assert.match(html, /Display time zone/);
+  assert.match(html, /aria-pressed="true">Seattle<\/button>/);
+  assert.match(html, /aria-pressed="false">India<\/button>/);
   assert.match(html, /VAC slots/);
   assert.match(html, /10:26 PM/);
   assert.match(html, /4:26 PM/);

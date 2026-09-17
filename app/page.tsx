@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import bundledData from "../public/data/attempts.json";
+import { SEATTLE_ZONE, INDIA_ZONE, dateInZone, displayClock, displayRange, displayAttemptDate, sourceDateForDisplayDate } from "./time-zone.mjs";
 
 type StageState = "pass" | "fail" | "pending";
 type Attempt = {
@@ -179,6 +180,8 @@ function weightedCount(attempts: Attempt[], predicate: (attempt: Attempt) => boo
 }
 
 export default function Home() {
+  const [timeZone, setTimeZone] = useState<string>(SEATTLE_ZONE);
+  const [boardDate, setBoardDate] = useState<string | null>(null);
   const [attempts, setAttempts] = useState<Attempt[]>(bundledAttempts);
   const [syncState, setSyncState] = useState<"loading" | "synced" | "fallback">("loading");
   const [statusFilter, setStatusFilter] = useState<"all" | WindowRow["status"]>("all");
@@ -188,12 +191,26 @@ export default function Home() {
   const [calendarMonth, setCalendarMonth] = useState(latestBundledDate.slice(0, 7));
   const [selectedCalendarDate, setSelectedCalendarDate] = useState(latestBundledDate);
   const [selectedOutcome, setSelectedOutcome] = useState("noCalendar");
-  const [attemptDate, setAttemptDate] = useState(() => new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Los_Angeles",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date()));
+  const [attemptDate, setAttemptDate] = useState(latestBundledDate);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      const today = dateInZone(new Date(), SEATTLE_ZONE);
+      setBoardDate(today);
+      setAttemptDate(today);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  function changeTimeZone(nextZone: string) {
+    setTimeZone(nextZone);
+    setAttemptDate(dateInZone(new Date(), nextZone));
+    const latestDate = attempts.map((attempt) => displayAttemptDate(attempt.date, attempt.window, nextZone)).filter(isExactDate).sort().at(-1);
+    if (latestDate) {
+      setCalendarMonth(latestDate.slice(0, 7));
+      setSelectedCalendarDate(latestDate);
+    }
+  }
 
   useEffect(() => {
     const controller = new AbortController();
@@ -226,7 +243,8 @@ export default function Home() {
 
   const datedAttempts = attempts.filter((attempt) => isExactDate(attempt.date));
   const calendarDays = datedAttempts.reduce<Record<string, CalendarDay>>((days, attempt) => {
-    const day = days[attempt.date] ?? { date: attempt.date, attempts: [], runs: 0, stage: 0, calendarHits: 0, timeHits: 0, submitHits: 0, vacAcceptedHits: 0, consularCalendarHits: 0, consularTimeHits: 0, consularSubmitHits: 0, slotsSeen: 0, slotReports: 0, consularSlotsSeen: 0, consularSlotReports: 0 };
+    const displayDate = displayAttemptDate(attempt.date, attempt.window, timeZone);
+    const day = days[displayDate] ?? { date: displayDate, attempts: [], runs: 0, stage: 0, calendarHits: 0, timeHits: 0, submitHits: 0, vacAcceptedHits: 0, consularCalendarHits: 0, consularTimeHits: 0, consularSubmitHits: 0, slotsSeen: 0, slotReports: 0, consularSlotsSeen: 0, consularSlotReports: 0 };
     const weight = attempt.weight ?? 1;
     day.attempts.push(attempt);
     day.runs += weight;
@@ -246,7 +264,7 @@ export default function Home() {
       day.consularSlotsSeen += attempt.consularSlotsSeen;
       day.consularSlotReports += weight;
     }
-    days[attempt.date] = day;
+    days[displayDate] = day;
     return days;
   }, {});
   const observedDays = Object.values(calendarDays);
@@ -288,13 +306,19 @@ export default function Home() {
     setSelectedCalendarDate(firstObservedDate ?? `${nextMonth}-01`);
   }
 
+  const boardReferenceDate = boardDate ?? latestBundledDate;
   const filteredWindows = windows
     .filter((item) => {
       const matchesStatus = statusFilter === "all" || item.status === statusFilter;
-      const haystack = `${item.window} ${item.basis} ${item.status}`.toLowerCase();
+      const haystack = `${item.window} ${displayClock(boardReferenceDate, item.window, timeZone).time} ${item.basis} ${item.status}`.toLowerCase();
       return matchesStatus && haystack.includes(query.toLowerCase());
     })
-    .sort((a, b) => windowMinutes(a.window) - windowMinutes(b.window));
+    .sort((a, b) => {
+      if (timeZone === SEATTLE_ZONE || !boardDate) return windowMinutes(a.window) - windowMinutes(b.window);
+      const first = displayClock(boardDate, a.window, timeZone);
+      const second = displayClock(boardDate, b.window, timeZone);
+      return first.date.localeCompare(second.date) || windowMinutes(first.time) - windowMinutes(second.time);
+    });
 
   function addAttempt(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -307,7 +331,7 @@ export default function Home() {
     const slotsSeen = rawSlotsSeen === "" ? (outcome === "noCalendar" || outcome === "calendarOnly" ? 0 : undefined) : Number(rawSlotsSeen);
     const consularSlotsSeen = rawConsularSlotsSeen === "" ? (outcome === "consularNoCalendar" || outcome === "consularCalendarOnly" ? 0 : undefined) : Number(rawConsularSlotsSeen);
     const next = {
-      date: String(form.get("date")),
+      date: sourceDateForDisplayDate(String(form.get("date")), attemptedWindow, timeZone),
       window: attemptedWindow,
       selectWindow: selectedWindow?.select ?? attemptedWindow,
       ...outcomeMap[outcome],
@@ -350,6 +374,10 @@ export default function Home() {
         </div>
         <div className="header-actions">
           <span className={`live-pill ${syncState}`}><i /> {syncState === "synced" ? "Git-backed dataset" : syncState === "loading" ? "Syncing with Git" : "Bundled snapshot"}</span>
+          <div className="zone-toggle" role="group" aria-label="Display time zone">
+            <button type="button" aria-pressed={timeZone === SEATTLE_ZONE} onClick={() => changeTimeZone(SEATTLE_ZONE)}>Seattle</button>
+            <button type="button" aria-pressed={timeZone === INDIA_ZONE} onClick={() => changeTimeZone(INDIA_ZONE)}>India</button>
+          </div>
           <button className="ghost-button" onClick={exportData}>Export JSON</button>
           <button className="primary-button" onClick={() => setShowForm(true)}>+ Log attempt</button>
         </div>
@@ -357,7 +385,7 @@ export default function Home() {
 
       <section className="hero">
         <div>
-          <p className="eyebrow">B1/B2 · Chennai VAC · Pacific time</p>
+          <p className="eyebrow">B1/B2 · Chennai VAC · {timeZone === SEATTLE_ZONE ? "Seattle time" : "India time (IST)"}</p>
           <h1>Turn every booking attempt<br />into usable evidence.</h1>
           <p className="hero-copy">Track the full race—from the VAC dropdown to final booking confirmation. No magic times, just observed outcomes.</p>
         </div>
@@ -426,6 +454,10 @@ export default function Home() {
           </div>}
         </div>
 
+        {activeTab === "windows" && <p className="zone-note">Times below are shown in <strong>{timeZone === SEATTLE_ZONE ? "Seattle (Pacific) time" : "India Standard Time"}</strong>. {timeZone === INDIA_ZONE ? `Converted from Seattle windows on ${formatCalendarDate(boardReferenceDate, { month: "short", day: "numeric", year: "numeric" })}; some windows fall on the following India date.` : "The recorded windows use Seattle time; the offset changes with daylight saving time."} These are observed check windows, not guaranteed slot-release times.</p>}
+        {activeTab === "attempts" && <p className="zone-note">Window times and dates are shown in <strong>{timeZone === SEATTLE_ZONE ? "Seattle time" : "India time"}</strong>. Observation notes are original source text and may mention Seattle times.</p>}
+        {activeTab === "calendar" && <p className="zone-note">Attempt dates are grouped by <strong>{timeZone === SEATTLE_ZONE ? "Seattle date" : "India date"}</strong>. The underlying Git records remain in Seattle time.</p>}
+
         {activeTab === "windows" ? (
           <div className="table-wrap">
             <table>
@@ -445,8 +477,9 @@ export default function Home() {
                 const consularSlotReports = weightedCount(related, (attempt) => typeof attempt.consularSlotsSeen === "number");
                 const consularSubmitted = weightedCount(related, (a) => a.consularSubmitClicked === "pass");
                 const booked = weightedCount(related, (a) => a.bookingCompleted === "pass");
+                const displayed = displayClock(boardReferenceDate, item.window, timeZone);
                 return <tr key={item.window} className={`window-row status-${item.status}`}>
-                  <td><strong>{item.window}</strong><small>Pacific</small></td><td>{item.login}</td><td>{item.schedule}</td><td className="select-time">{item.select}</td><td>{runs || "—"}</td><td>{runs ? `${Math.round(cal / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(times / runs * 100)}%` : "—"}</td><td>{slotReports ? slots : "—"}</td><td>{runs ? `${Math.round(clicked / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(accepted / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(consularCalendars / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(consularTimes / runs * 100)}%` : "—"}</td><td>{consularSlotReports ? consularSlots : "—"}</td><td>{runs ? `${Math.round(consularSubmitted / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(booked / runs * 100)}%` : "—"}</td><td><span className={`status-chip ${item.status}`}>{item.status}</span></td><td className="evidence-cell">{item.basis}</td>
+                  <td><strong>{displayed.time}</strong><small>{timeZone === SEATTLE_ZONE ? "Seattle" : `${formatCalendarDate(displayed.date, { month: "short", day: "numeric" })} IST`}</small></td><td>{displayRange(boardReferenceDate, item.login, item.window, timeZone)}</td><td>{displayRange(boardReferenceDate, item.schedule, item.window, timeZone)}</td><td className="select-time">{displayRange(boardReferenceDate, item.select, item.window, timeZone)}</td><td>{runs || "—"}</td><td>{runs ? `${Math.round(cal / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(times / runs * 100)}%` : "—"}</td><td>{slotReports ? slots : "—"}</td><td>{runs ? `${Math.round(clicked / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(accepted / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(consularCalendars / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(consularTimes / runs * 100)}%` : "—"}</td><td>{consularSlotReports ? consularSlots : "—"}</td><td>{runs ? `${Math.round(consularSubmitted / runs * 100)}%` : "—"}</td><td>{runs ? `${Math.round(booked / runs * 100)}%` : "—"}</td><td><span className={`status-chip ${item.status}`}>{item.status}</span></td><td className="evidence-cell">{item.basis}</td>
                 </tr>;
               })}</tbody>
             </table>
@@ -455,7 +488,7 @@ export default function Home() {
           <div className="attempt-list">
             <div className="attempt-head"><span>Date / window</span><span>VAC calendar</span><span>VAC time</span><span>VAC slots</span><span>VAC Submit</span><span>VAC accepted</span><span>Consular calendar</span><span>Consular time</span><span>Consular slots</span><span>Consular Submit</span><span>Booking completed</span><span>Observation</span></div>
             {attempts.map((attempt) => <article className="attempt-row" key={attempt.id}>
-              <div><strong>{attempt.window}</strong><span>{attempt.date}{attempt.weight ? ` · ${attempt.weight}× runs` : ""}{attempt.inferred ? " · verify date" : ""}</span></div>
+              <div><strong>{isExactDate(attempt.date) ? displayClock(attempt.date, attempt.window, timeZone).time : attempt.window}</strong><span>{displayAttemptDate(attempt.date, attempt.window, timeZone)} {timeZone === INDIA_ZONE ? "IST" : "Seattle"}{attempt.weight ? ` · ${attempt.weight}× runs` : ""}{attempt.inferred ? " · verify date" : ""}</span></div>
               <StatusMark state={attempt.calendar} /><StatusMark state={attempt.time} /><strong className={`slot-count ${typeof attempt.slotsSeen === "number" ? "recorded" : "unknown"}`}>{typeof attempt.slotsSeen === "number" ? attempt.slotsSeen : "—"}</strong><StatusMark state={attempt.submitClicked} /><StatusMark state={attempt.slotAccepted} /><StatusMark state={attempt.consularCalendar} /><StatusMark state={attempt.consularTime} /><strong className={`slot-count ${typeof attempt.consularSlotsSeen === "number" ? "recorded" : "unknown"}`}>{typeof attempt.consularSlotsSeen === "number" ? attempt.consularSlotsSeen : "—"}</strong><StatusMark state={attempt.consularSubmitClicked} /><StatusMark state={attempt.bookingCompleted} />
               <p>{attempt.notes}{attempt.sourceUrl && <a className="source-link" href={attempt.sourceUrl} target="_blank" rel="noreferrer">GitHub record ↗</a>}</p>
             </article>)}
@@ -488,7 +521,7 @@ export default function Home() {
                 {selectedDay ? <>
                   <div className="day-score"><span>Deepest stage</span><strong>{stageLabels[selectedDay.stage]}</strong><small>{selectedDay.runs} observed {selectedDay.runs === 1 ? "attempt" : "attempts"} · {selectedDay.slotReports ? `${selectedDay.slotsSeen} VAC ${selectedDay.slotsSeen === 1 ? "slot" : "slots"}` : "VAC slots unrecorded"} · {selectedDay.consularSlotReports ? `${selectedDay.consularSlotsSeen} consular ${selectedDay.consularSlotsSeen === 1 ? "slot" : "slots"}` : "consular slots unrecorded"}</small></div>
                   <div className="day-attempts">{selectedDay.attempts.map((attempt) => <article key={attempt.id}>
-                    <div><strong>{attempt.window}</strong><span>{stageLabels[attemptStage(attempt)]}</span><b>{typeof attempt.slotsSeen === "number" ? `${attempt.slotsSeen} VAC` : "VAC —"}{typeof attempt.consularSlotsSeen === "number" ? ` · ${attempt.consularSlotsSeen} consular` : ""}</b></div>
+                    <div><strong>{displayClock(attempt.date, attempt.window, timeZone).time}</strong><span>{stageLabels[attemptStage(attempt)]}</span><b>{typeof attempt.slotsSeen === "number" ? `${attempt.slotsSeen} VAC` : "VAC —"}{typeof attempt.consularSlotsSeen === "number" ? ` · ${attempt.consularSlotsSeen} consular` : ""}</b></div>
                     <p>{attempt.notes}</p>
                   </article>)}</div>
                 </> : <div className="empty-day"><strong>No attempts logged.</strong><p>Select a colored day to inspect what happened, or log an attempt for this date.</p></div>}
@@ -529,8 +562,8 @@ export default function Home() {
       {showForm && <div className="modal-backdrop" role="presentation" onMouseDown={() => setShowForm(false)}>
         <form className="attempt-form" onSubmit={addAttempt} onMouseDown={(e) => e.stopPropagation()}>
           <div className="form-head"><div><p className="eyebrow">New observation</p><h2>Log an attempt</h2></div><button type="button" aria-label="Close form" onClick={() => setShowForm(false)}>×</button></div>
-          <label>Date<input name="date" type="date" required value={attemptDate} onChange={(event) => setAttemptDate(event.target.value)} /></label>
-          <label>Attempted window<select name="window" required>{windows.map((item) => <option key={item.window}>{item.window}</option>)}</select></label>
+          <label>Date ({timeZone === INDIA_ZONE ? "India" : "Seattle"})<input name="date" type="date" required value={attemptDate} onChange={(event) => setAttemptDate(event.target.value)} /></label>
+          <label>Attempted window ({timeZone === INDIA_ZONE ? "India" : "Seattle"})<select name="window" required>{windows.map((item) => <option key={item.window} value={item.window}>{displayClock(sourceDateForDisplayDate(attemptDate, item.window, timeZone), item.window, timeZone).time}</option>)}</select><small className="field-hint">In India view, choose the local time and date you actually checked. The Git log stores the corresponding Seattle time.</small></label>
           <fieldset><legend>Deepest outcome reached</legend>{Object.entries(outcomeLabels).map(([value, label]) => <label className="radio-row" key={value}><input type="radio" name="outcome" value={value} checked={selectedOutcome === value} onChange={() => setSelectedOutcome(value)} /><span><b>{label}</b><small>Stages before this are recorded as passed.</small></span></label>)}</fieldset>
           <label>VAC appointment slots seen<input name="slotsSeen" type="number" min="0" max="1000" step="1" placeholder={selectedOutcome === "noCalendar" ? "0" : "Enter the visible count"} /><small className="field-hint">Count the appointment-time rows shown after selecting Chennai VAC. Leave blank only when unknown.</small></label>
           <label>Consular appointment slots seen<input name="consularSlotsSeen" type="number" min="0" max="1000" step="1" placeholder={selectedOutcome === "consularNoCalendar" ? "0" : "Enter the visible count"} /><small className="field-hint">Use 0 when Chennai was selected under Consular Posts but no calendar appeared. Leave blank if the consular stage was not reached.</small></label>
