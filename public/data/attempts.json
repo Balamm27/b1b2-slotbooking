@@ -1,7 +1,23 @@
 {
   "schemaVersion": 3,
-  "updatedAt": "2026-09-17T05:32:07.000Z",
+  "updatedAt": "2026-09-18T14:57:10.000Z",
   "attempts": [
+    {
+      "id": "manual-2026-09-18-0756am",
+      "date": "2026-09-18",
+      "window": "7:56 AM",
+      "selectWindow": "Around 7:56 AM",
+      "calendar": "fail",
+      "time": "fail",
+      "submitClicked": "pending",
+      "slotAccepted": "pending",
+      "consularCalendar": "pending",
+      "consularTime": "pending",
+      "consularSubmitClicked": "pending",
+      "bookingCompleted": "pending",
+      "slotsSeen": 0,
+      "notes": "Reported at 8:26 PM IST on Sep 18 (7:56 AM Seattle the same day). After Chennai VAC was selected, the OFC page showed 'No Slots Available' without loading a calendar or time rows. Submit remained unavailable; no consular stage was reached. Exact login, Schedule click, and VAC selection seconds were not recorded."
+    },
     {
       "id": "manual-2026-09-16-1026pm",
       "date": "2026-09-16",

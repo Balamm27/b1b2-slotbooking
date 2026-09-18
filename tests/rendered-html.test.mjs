@@ -23,6 +23,7 @@ test("renders the Chennai Slot Lab dashboard shell", async () => {
   assert.match(html, /10:26 PM/);
   assert.match(html, /4:26 PM/);
   assert.match(html, /7:56 PM/);
+  assert.match(html, /7:56 AM/);
   assert.match(html, /11:26 PM/);
   assert.match(html, /VAC Submit/);
   assert.match(html, /VAC accepted/);
