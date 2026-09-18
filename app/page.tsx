@@ -141,7 +141,7 @@ const windows: WindowRow[] = [
   { window: "6:56 AM", login: "6:53:30–6:54:30", schedule: "6:55:15–6:55:35", select: "6:55:50–6:56:10", status: "research", basis: "Delayed alert only; no confirmed booking" },
   { window: "7:26 AM", login: "7:23:30–7:24:30", schedule: "7:25:15–7:25:35", select: "7:25:50–7:26:10", status: "research", basis: "Delayed alert only; no confirmed booking" },
   { window: "7:56 AM", login: "Not recorded", schedule: "Not recorded", select: "Around 7:56 AM", status: "research", basis: "One confirmed Chennai OFC check returned no calendar or time rows" },
-  { window: "9:26 AM", login: "9:23:30–9:24:30", schedule: "9:25:15–9:25:35", select: "9:25:50–9:26:10", status: "research", basis: "Delayed alert only; no confirmed booking" },
+  { window: "9:26 AM", login: "9:23:30–9:24:30", schedule: "9:25:15–9:25:35", select: "9:25:50–9:26:10", status: "research", basis: "One confirmed no-calendar miss; earlier delayed alert remains unverified" },
   { window: "11:26 AM", login: "11:23:30–11:24:30", schedule: "11:25:15–11:25:35", select: "11:25:50–11:26:10", status: "research", basis: "Delayed alert only; removed from ranking" },
   { window: "11:26 PM", login: "11:23:30–11:24:30", schedule: "11:25:15–11:25:35", select: "11:25:50–11:26:10", status: "research", basis: "One confirmed complete miss; no calendar or time inventory" },
 ];
